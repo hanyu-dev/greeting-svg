@@ -1,0 +1,63 @@
+[package]
+name = "greeting-svg"
+version = "0.1.0"
+edition = "2021"
+authors = ["Hantong Chen"]
+license = "MIT"
+rust-version = "1.82"
+
+[dependencies]
+anyhow = "1.0"
+arc-swap = "1.7.1"
+axum = { version = "0.7", default-features = false, features = ["http1", "tokio"] }
+chrono = { version = "0.4", default-features = false, features = ["now", "std"] }
+chrono-tz = "0.10"
+clap = { version = "4.5", features = ["derive"] }
+dashmap = { version = "6.1", features = ["inline", "rayon"] }
+deadpool-sqlite = { version = "0.9", optional = true }
+fluent-uri = "0.3"
+foldhash = "0.1"
+macro-toolset = { version = "0.1", default-features = false, registry = "hantong-public", features = ["macros-string"] }
+mimalloc = "0.1"
+rayon = "1.10"
+rusqlite = { version = "0.32", optional = true }
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+svg = "0.18"
+tokio = { version = "1.41", features = ["macros", "net", "parking_lot", "rt-multi-thread", "signal", "time"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "parking_lot"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+codegen-units = 1
+panic = "unwind"
+
+[features]
+default = ["sqlite-bundled"]
+
+# Store data in SQLite database
+sqlite = ["dep:deadpool-sqlite", "dep:rusqlite"]
+sqlite-bundled = ["sqlite", "rusqlite/bundled"] # For windows
+
+[lints.rust]
+unsafe_code = "warn"
+missing_docs = "warn"
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+
+[lints.clippy]
+await_holding_lock = "warn"
+dbg_macro = "warn"
+doc_markdown = "warn"
+empty_enum = "warn"
+enum_glob_use = "warn"
+inefficient_to_string = "warn"
+mem_forget = "warn"
+mutex_integer = "warn"
+needless_continue = "warn"
+todo = "warn"
+unimplemented = "warn"
+wildcard_imports = "warn"

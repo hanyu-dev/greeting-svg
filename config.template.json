@@ -1,0 +1,7 @@
+{
+    "listen": "0.0.0.0:8989",
+    "access_key": "", // DO SET SOMETHING HERE AND REMOVE THE COMMENT, OR DELETE THE WHOLE LINE
+    "user_id": [
+        "example"
+    ]
+}

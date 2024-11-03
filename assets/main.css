@@ -1,0 +1,7 @@
+svg {background-color: rgba(0,0,0,0); }
+#image .line { fill: none; stroke: rgba(0,140,255,1); opacity: .7; stroke-miterlimit: 10; stroke-width: 0.5px; stroke-linecap: round; }
+#image .bg { height: 250px; }
+#detail .text { font-size: 12px; fill: rgba(0,140,255,1); font-weight: lighter; }
+#contact .item .icon { width: 16px; height: 16px; }
+#contact .item .text { font-size: 10px; fill: rgba(0,140,255,1); font-weight: lighter; }
+#quote .text { font-size: 10px; fill: rgba(0,140,255,1); font-weight: lighter; }
