@@ -17,7 +17,7 @@ dashmap = { version = "6.1", features = ["inline", "rayon"] }
 deadpool-sqlite = { version = "0.9", optional = true }
 fluent-uri = "0.3"
 foldhash = "0.1"
-macro-toolset = { version = "0.1", default-features = false, registry = "hantong-public", features = ["macros-string"] }
+macro-toolset = { version = "0.3", default-features = false, features = ["macros-string"] }
 mimalloc = "0.1"
 rayon = "1.10"
 rusqlite = { version = "0.32", optional = true }
