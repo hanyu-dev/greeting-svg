@@ -1,18 +1,22 @@
 # GREETING SVG
 
-A simple programme generate SVG image as greeting card:
+![GitHub Tag](https://img.shields.io/github/v/tag/cxw620/greeting-svg)
+![GitHub License](https://img.shields.io/github/license/cxw620/greeting-svg)
+
+A simple programme generate SVG image as greeting card.
 
 ## Usage
 
-Download from release and run, no `Redis` but builtin simple cache system.
+Download from release(currently there's no prebuilt release) and run, no `Redis` but builtin simple cache system.
 
-The counting data can be sync to the local sqlite database asynchronously, though with no necessary
-when you do not expose the service to public.
+The counting data will be sync to the local sqlite database asynchronously.
 
-## Build from source
+Build from source is recommended.
 
-I use some of my private dependences from my own cargo registry, so you cannot build from source directly,
-but I will make them open-source soon.
+## TODOs
+
+- `Linux.do` specific content
+- `Linux.do` OAUTH support
 
 ## License
 
