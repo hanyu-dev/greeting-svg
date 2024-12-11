@@ -19,7 +19,9 @@ use tokio::sync::mpsc;
 
 /// Counter map
 static COUNTERS: LazyLock<DashMap<Arc<str>, AtomicU64, foldhash::fast::RandomState>> =
-    LazyLock::new(|| DashMap::with_capacity_and_hasher(8192, foldhash::fast::RandomState::default()));
+    LazyLock::new(|| {
+        DashMap::with_capacity_and_hasher(8192, foldhash::fast::RandomState::default())
+    });
 
 /// Persistent storage tx
 static DB_PERSISTENT_TX: OnceLock<mpsc::Sender<(Arc<str>, u64)>> = OnceLock::new();
@@ -43,12 +45,15 @@ impl Counter {
 
         // Persistent storage
         // No need to log here when error occurs
-        let _ = db::Persistent::init().await.map(|tx| DB_PERSISTENT_TX.set(tx));
+        let _ = db::Persistent::init()
+            .await
+            .map(|tx| DB_PERSISTENT_TX.set(tx));
 
         Self::insert_all(config.user_id.iter().map(|id| (id.clone(), 0)).collect());
     }
 
-    /// Update counter related config from given [Config](crate::config::Config).
+    /// Update counter related config from given
+    /// [Config](crate::config::Config).
     pub(crate) fn update_config(config: &crate::config::Config) {
         // * Update max counters limits
         CONF_MAX_COUNTERS.store(config.max_counter, Ordering::Relaxed);
@@ -88,13 +93,15 @@ impl Counter {
     pub(crate) async fn fetch_add(id: &str, access_key: Option<&Cow<'_, str>>) -> Option<u64> {
         let id: Arc<str> = id.into();
 
-        let current_count = COUNTERS.get(&id).map(|u| u.fetch_add(1, Ordering::AcqRel) + 1);
+        let current_count = COUNTERS
+            .get(&id)
+            .map(|u| u.fetch_add(1, Ordering::AcqRel) + 1);
 
         // ! verify access key when no corresponding counter exists
         if current_count.is_none()
-            && access_key
-                .zip((CONF_ACCESS_KEY).get())
-                .is_some_and(|(access_key, desired_access_key)| access_key == desired_access_key.load().as_str())
+            && access_key.zip((CONF_ACCESS_KEY).get()).is_some_and(
+                |(access_key, desired_access_key)| access_key == desired_access_key.load().as_str(),
+            )
         {
             Self::insert_counter(id.clone()).await;
             Self::persist_data_tx(id.clone(), 1).await;

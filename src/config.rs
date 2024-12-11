@@ -14,7 +14,8 @@ pub(crate) struct Config {
     #[arg(long)]
     /// `access_key` for adding new counters
     ///
-    /// If not set, no new counters can be added and use the existing ones from the config.
+    /// If not set, no new counters can be added and use the existing ones from
+    /// the config.
     pub access_key: Option<Arc<String>>,
 
     #[arg(short, long)]
@@ -39,7 +40,8 @@ impl Config {
             tracing::info!("Reading config file from {}", file.to_str().unwrap());
 
             let fs = File::open(file).with_context(|| "Read config.json error")?;
-            let config: Config = serde_json::from_reader(fs).with_context(|| "Parse config.json error")?;
+            let config: Config =
+                serde_json::from_reader(fs).with_context(|| "Parse config.json error")?;
 
             return Ok(config);
         }

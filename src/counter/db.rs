@@ -1,6 +1,8 @@
-//! Database
+//! Database Implementation
+//!
+//! - `Sqlite`
+//! - `PostgreSQL` TODO
 
-#[allow(unused_imports)]
 use std::{
     path::Path,
     sync::{Arc, OnceLock},
@@ -57,7 +59,8 @@ impl SqliteImpl {
         let path = Path::new("./db.sqlite3");
 
         let new_db = !path.exists();
-        let pool = deadpool_sqlite::Config::new(path).create_pool(deadpool_sqlite::Runtime::Tokio1)?;
+        let pool =
+            deadpool_sqlite::Config::new(path).create_pool(deadpool_sqlite::Runtime::Tokio1)?;
 
         if new_db {
             tracing::debug!("New database, create tables...");
@@ -104,7 +107,9 @@ impl SqliteImpl {
                 let mut stmt = conn.prepare("SELECT * FROM counters")?;
 
                 // Terrible code, `rusqlite` is really a mess...
-                let rows = stmt.query_map([], |row| Ok((row.get::<_, Arc<str>>(0)?, row.get::<_, i64>(1)? as u64)))?;
+                let rows = stmt.query_map([], |row| {
+                    Ok((row.get::<_, Arc<str>>(0)?, row.get::<_, i64>(1)? as u64))
+                })?;
 
                 let results = rows.filter_map(|row| row.ok()).collect();
 
@@ -178,7 +183,10 @@ async fn test_sqlite() {
         .unwrap();
 
     assert_eq!(
-        SqliteImpl::sqlite_get("test_data".into()).await.unwrap().unwrap(),
+        SqliteImpl::sqlite_get("test_data".into())
+            .await
+            .unwrap()
+            .unwrap(),
         (u64::MAX - 1)
     );
 

@@ -68,7 +68,11 @@ impl Greeting<'_> {
             r#"<g id="detail">"#,
             r#"<text class="text" transform="translate(20 35)">欢迎您，第 "#,
             self.access_count,
-            if self.access_count.is_some() { None } else { Some("NaN") },
+            if self.access_count.is_some() {
+                None
+            } else {
+                Some("NaN")
+            },
             r#" 位访问本页面的朋友 🎉</text>"#,
             r#"<text class="text" transform="translate(20 65)">今天是 "#,
             now_month,

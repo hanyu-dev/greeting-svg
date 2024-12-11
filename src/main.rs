@@ -75,7 +75,10 @@ async fn post_task() -> Result<()> {
 
 #[inline]
 #[tracing::instrument]
-async fn axum_greeting(Path(id): Path<String>, request: Request) -> Result<Response<String>, StatusCode> {
+async fn axum_greeting(
+    Path(id): Path<String>,
+    request: Request,
+) -> Result<Response<String>, StatusCode> {
     tracing::debug!("Accepted request.");
 
     if id.len() > 256 {
@@ -112,7 +115,15 @@ async fn greeting(id: String, request: Request) -> Result<Response<String>> {
 
     Response::builder()
         .header(CONTENT_TYPE, HeaderValue::from_static("image/svg+xml"))
-        .body(svg::Greeting { tz, access_count, note }.generate().await)
+        .body(
+            svg::Greeting {
+                tz,
+                access_count,
+                note,
+            }
+            .generate()
+            .await,
+        )
         .map_err(Into::into)
 }
 
@@ -141,6 +152,11 @@ fn parse_query(query: &str) -> HashMap<Cow<str>, Cow<str>, foldhash::fast::Rando
                 (pair, EStr::EMPTY)
             })
         })
-        .map(|(k, v)| (k.decode().into_string_lossy(), v.decode().into_string_lossy()))
+        .map(|(k, v)| {
+            (
+                k.decode().into_string_lossy(),
+                v.decode().into_string_lossy(),
+            )
+        })
         .collect()
 }
