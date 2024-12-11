@@ -484,6 +484,7 @@ dependencies = [
  "anyhow",
  "arc-swap",
  "axum",
+ "bytes",
  "chrono",
  "chrono-tz",
  "clap",
@@ -703,9 +704,9 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
 name = "macro-toolset"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f118906548a19c22937275c3394d60071843fc3e7cf13916d791ac7db7bf4de1"
+checksum = "735db2ad7d86aeb9c81361601e76e71c12924bffc3bf6ef0cd85be44ad4592e3"
 
 [[package]]
 name = "matchers"

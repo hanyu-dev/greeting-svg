@@ -6,7 +6,7 @@ use macro_toolset::str_concat;
 
 #[derive(Debug)]
 /// Greeting data
-pub(crate) struct Greeting<'g> {
+pub(crate) struct GeneralImpl<'g> {
     /// Custom timezone
     pub tz: Tz,
 
@@ -17,26 +17,26 @@ pub(crate) struct Greeting<'g> {
     pub note: Option<&'g Cow<'g, str>>,
 }
 
-/// SVG static data
-static SVG_STATIC_DATA: &str = concat!(
-    // CSS
-    "<defs><style>",
-    include_str!("../assets/main.css"),
-    "</style></defs>",
-    // Title
-    "<title>",
-    "Cards | Jerry Zhou and Hantong Chen",
-    "</title>",
-    // Image on the right side
-    r#"<g id="image"><line class="line" y1="20" y2="170" x1="300.5" x2="300.5"/>"#,
-    r#"<image class="bg" href=""#,
-    include_str!("../assets/image_b64data.txt"),
-    r#"" transform="translate(300.5, 32) scale(0.5)"/></g>"#,
-);
-
-impl Greeting<'_> {
-    /// Create a new [Greeting]
+impl GeneralImpl<'_> {
+    /// Create a new [`GeneralImpl`]
     pub(crate) async fn generate(self) -> String {
+        /// SVG static data
+        static SVG_STATIC_DATA: &str = concat!(
+            // CSS
+            "<defs><style>",
+            include_str!("../assets/theme/general/main.css"),
+            "</style></defs>",
+            // Title
+            "<title>",
+            "Cards | Jerry Zhou and Hantong Chen",
+            "</title>",
+            // Image on the right side
+            r#"<g id="image"><line class="line" y1="20" y2="170" x1="300.5" x2="300.5"/>"#,
+            r#"<image class="bg" href=""#,
+            include_str!("../assets/image/marisa-kirisame.png.data"),
+            r#"" transform="translate(300.5, 32) scale(0.5)"/></g>"#,
+        );
+
         let now = Utc::now().with_timezone(&self.tz);
 
         let now_year = now.year();
