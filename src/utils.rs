@@ -5,6 +5,13 @@ use std::{borrow::Cow, collections::HashMap};
 use axum::http::Uri;
 use macro_toolset::wrapper;
 
+/// The version of the crate.
+pub(crate) static VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
+
+// /// The version of the server.
+// pub(crate) static BUILD_TIME: &str = include_str!(concat!(env!("OUT_DIR"),
+// "/BUILD_TIME"));
+
 wrapper!(pub(crate) Queries<'q>(HashMap<Cow<'q, str>, Cow<'q, str>, foldhash::fast::RandomState>), derive(Debug, Default));
 
 impl<'q> Queries<'q> {

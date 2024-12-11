@@ -46,9 +46,34 @@ async fn greeting(id: String, request: Request) -> Result<Response> {
     let greeting_type = queries.get("type").map(AsRef::as_ref);
 
     let mut content = match greeting_type {
-        Some("moe-counter") => {
-            todo!()
+        Some("moe-counter") => svg::moe_counter::MoeCounterImpl {
+            theme: queries
+                .get("theme")
+                .map(AsRef::as_ref)
+                .unwrap_or("moebooru"),
+            padding: queries
+                .get("padding")
+                .and_then(|padding| padding.parse().ok())
+                .unwrap_or(7),
+            offset: queries
+                .get("offset")
+                .and_then(|offset| offset.parse().ok())
+                .unwrap_or(0.0),
+            align: queries.get("align").map(AsRef::as_ref).unwrap_or("top"),
+            scale: queries
+                .get("scale")
+                .and_then(|scale| scale.parse().ok())
+                .unwrap_or(1.0),
+            pixelated: queries
+                .get("pixelated")
+                .map(|pixelated| pixelated == "1" || pixelated == "true")
+                .unwrap_or(false),
+            darkmode: queries
+                .get("darkmode")
+                .map(|darkmode| darkmode == "1" || darkmode == "true"),
+            prefix: queries.get("prefix").and_then(|prefix| prefix.parse().ok()),
         }
+        .generate(access_count.unwrap_or_default()),
         _ => {
             // * Note
             let note = queries.get("note");

@@ -1,3 +1,5 @@
+pub(crate) mod moe_counter;
+
 use std::borrow::Cow;
 
 use chrono::{Datelike, Utc, Weekday};
