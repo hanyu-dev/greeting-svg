@@ -15,6 +15,7 @@ use axum::{
 };
 use macro_toolset::init_tracing_simple;
 use tokio::net::TcpListener;
+use tower_http::compression::CompressionLayer;
 
 // Mimalloc
 #[global_allocator]
@@ -37,6 +38,7 @@ async fn main() -> Result<()> {
         tcp_listener,
         axum::Router::new()
             .route("/greeting/:id", get(axum_greeting))
+            .layer(CompressionLayer::new())
             .fallback(fallback),
     )
     .with_graceful_shutdown(shutdown_signal())
