@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
         axum::Router::new()
             .route("/greeting/:id", get(handler::axum_greeting))
             .layer(CompressionLayer::new())
-            .layer(ServerTimingLayer::new(utils::VERSION))
+            .layer(ServerTimingLayer::new(env!("CARGO_PKG_NAME")).with_description(utils::VERSION))
             .fallback(handler::fallback),
     )
     .with_graceful_shutdown(shutdown_signal())
