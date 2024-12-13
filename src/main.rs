@@ -9,6 +9,7 @@ mod utils;
 use anyhow::Result;
 use axum::routing::get;
 use macro_toolset::init_tracing_simple;
+use miku_server_timing::ServerTimingLayer;
 use tokio::net::TcpListener;
 use tower_http::compression::CompressionLayer;
 
@@ -34,6 +35,7 @@ async fn main() -> Result<()> {
         axum::Router::new()
             .route("/greeting/:id", get(handler::axum_greeting))
             .layer(CompressionLayer::new())
+            .layer(ServerTimingLayer::new(utils::VERSION))
             .fallback(handler::fallback),
     )
     .with_graceful_shutdown(shutdown_signal())

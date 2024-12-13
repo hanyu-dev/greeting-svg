@@ -248,9 +248,9 @@ checksum = "325918d6fe32f23b19878fe4b34794ae41fc19ddbe53b10571a4874d44ffd39b"
 
 [[package]]
 name = "cc"
-version = "1.2.3"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27f657647bcff5394bf56c7317665bbf790a137a50eaaa5c6bfbb9e27a518f2d"
+checksum = "9157bbaa6b165880c27a4293a474c91cdcf265cc68cc829bf10be0964a391caf"
 dependencies = [
  "jobserver",
  "libc",
@@ -547,6 +547,7 @@ dependencies = [
  "foldhash",
  "imagesize",
  "macro-toolset",
+ "miku-server-timing",
  "mimalloc",
  "rand",
  "rayon",
@@ -798,9 +799,9 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
 name = "macro-toolset"
-version = "0.6.0"
+version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "735db2ad7d86aeb9c81361601e76e71c12924bffc3bf6ef0cd85be44ad4592e3"
+checksum = "de9219ccf94deffe86a120ce717e3b9ae203e12ed447fa07758af0dc693a57a9"
 dependencies = [
  "base64",
  "ryu",
@@ -826,6 +827,20 @@ name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
+
+[[package]]
+name = "miku-server-timing"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d7c98430cf507f3a9277632e2f481db410cd0053a40dd65240b8b070cdf6604"
+dependencies = [
+ "http",
+ "macro-toolset",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
 
 [[package]]
 name = "mimalloc"

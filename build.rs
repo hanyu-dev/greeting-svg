@@ -9,7 +9,7 @@ use std::{
 };
 
 use anyhow::{bail, Context, Result};
-use macro_toolset::str_concat;
+use macro_toolset::{str_concat, string::b64_padding};
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=assets/theme");
@@ -112,10 +112,7 @@ fn main() -> Result<()> {
                     size_w = size_w.max(image_size.width);
                     size_h = size_h.max(image_size.height);
 
-                    str_concat!(
-                        data_url_prefix,
-                        macro_toolset::string::padding::STANDARD::encode(&image_data)
-                    )
+                    str_concat!(data_url_prefix, b64_padding::STANDARD::encode(&image_data))
                 })
                 .collect::<Vec<_>>(),
             if image_start_path.exists() {
@@ -128,7 +125,7 @@ fn main() -> Result<()> {
 
                 Some(str_concat!(
                     data_url_prefix,
-                    macro_toolset::string::padding::STANDARD::encode(&image_data)
+                    b64_padding::STANDARD::encode(&image_data)
                 ))
             } else {
                 None
@@ -143,7 +140,7 @@ fn main() -> Result<()> {
 
                 Some(str_concat!(
                     data_url_prefix,
-                    macro_toolset::string::padding::STANDARD::encode(&image_data)
+                    b64_padding::STANDARD::encode(&image_data)
                 ))
             } else {
                 None
