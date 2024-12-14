@@ -34,7 +34,8 @@ async fn greeting(id: String, request: Request) -> Result<Response> {
     let queries = Queries::try_parse_uri(request.uri());
 
     let access_key = queries.get("access_key");
-    let access_count = Counter::fetch_add(&id, access_key).await;
+    let debug_mode = queries.get("debug").is_some_and(|d| d == "true");
+    let access_count = Counter::fetch_add(&id, access_key, debug_mode).await;
 
     // * Custom Timezone, default to Asia/Shanghai
     let tz = queries

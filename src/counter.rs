@@ -90,12 +90,20 @@ impl Counter {
     /// Increase the counter by 1, or create one if it doesn't exist.
     ///
     /// Will trigger the persistent storage write.
-    pub(crate) async fn fetch_add(id: &str, access_key: Option<&Cow<'_, str>>) -> Option<u64> {
+    pub(crate) async fn fetch_add(
+        id: &str,
+        access_key: Option<&Cow<'_, str>>,
+        debug_mode: bool,
+    ) -> Option<u64> {
         let id: Arc<str> = id.into();
 
-        let current_count = COUNTERS
-            .get(&id)
-            .map(|u| u.fetch_add(1, Ordering::AcqRel) + 1);
+        let current_count = COUNTERS.get(&id).map(|u| {
+            if debug_mode {
+                u.load(Ordering::Relaxed)
+            } else {
+                u.fetch_add(1, Ordering::AcqRel) + 1
+            }
+        });
 
         // ! verify access key when no corresponding counter exists
         if current_count.is_none()
