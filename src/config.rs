@@ -31,7 +31,7 @@ pub(crate) static CONF_CIDR_WHITELIST: LazyLock<DashSet<IpCidr, foldhash::fast::
 pub(crate) struct Config {
     #[arg(short, long, default_value = "0.0.0.0:8989")]
     /// Listen address
-    pub listen: ListenAddr,
+    pub listen: Vec<ListenAddr>,
 
     #[arg(long)]
     /// `access_key` for adding new counters
