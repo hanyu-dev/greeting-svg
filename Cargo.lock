@@ -551,6 +551,8 @@ dependencies = [
  "deadpool-sqlite",
  "fluent-uri",
  "foldhash",
+ "hyper",
+ "hyper-util",
  "imagesize",
  "macro-toolset",
  "miku-server-timing",
@@ -563,6 +565,7 @@ dependencies = [
  "svg",
  "tokio",
  "tower-http",
+ "tower-service",
  "tracing",
  "tracing-subscriber",
 ]

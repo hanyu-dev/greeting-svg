@@ -32,6 +32,11 @@ tower-http = { version = "0.6.2", features = ["compression-zstd"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "parking_lot"] }
 
+[target."cfg(unix)".dependencies]
+hyper = { version = "1.5.1", default-features = false, features = ["http1", "server"] }
+hyper-util = { version = "0.1", features = ["tokio", "server-auto", "http1"] }
+tower-service = "0.3.3"
+
 [build-dependencies]
 anyhow = "1.0.94"
 chrono = { version = "0.4.39", default-features = false, features = ["clock"] }

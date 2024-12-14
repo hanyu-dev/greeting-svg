@@ -2,6 +2,7 @@ use std::{
     fs::File,
     net::SocketAddr,
     path::Path,
+    str::FromStr,
     sync::{
         atomic::{AtomicUsize, Ordering},
         Arc, OnceLock,
@@ -25,7 +26,7 @@ pub(crate) static CONF_MAX_COUNTERS: AtomicUsize = AtomicUsize::new(131072);
 pub(crate) struct Config {
     #[arg(short, long, default_value = "0.0.0.0:8989")]
     /// Listen address
-    pub listen: SocketAddr,
+    pub listen: ListenAddr,
 
     #[arg(long)]
     /// `access_key` for adding new counters
@@ -91,5 +92,51 @@ impl Config {
                 None => CONF_ACCESS_KEY.set(ArcSwap::new(new_access_key)).unwrap(),
             }
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+/// Listen address
+pub(crate) enum ListenAddr {
+    /// Socket address
+    SocketAddr(SocketAddr),
+
+    /// Unix domain socket
+    Unix(String),
+}
+
+impl Serialize for ListenAddr {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            ListenAddr::SocketAddr(addr) => addr.serialize(serializer),
+            ListenAddr::Unix(path) => format!("unix:{path}").serialize(serializer),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ListenAddr {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+impl FromStr for ListenAddr {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some(unix_path) = s.strip_prefix("unix:") {
+            return Ok(ListenAddr::Unix(unix_path.to_string()));
+        }
+
+        s.parse::<SocketAddr>()
+            .map(ListenAddr::SocketAddr)
+            .map_err(Into::into)
     }
 }
