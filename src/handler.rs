@@ -1,10 +1,10 @@
 //! Request Handlers
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use axum::{
     body::Body,
     extract::{Path, Request},
-    http::{header::CONTENT_TYPE, HeaderValue, StatusCode},
+    http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
 };
 
@@ -21,11 +21,13 @@ pub(crate) async fn axum_greeting(
 
     match greeting(id, request).await {
         Ok(greeting) => Ok(greeting),
-        Err(error) => {
-            tracing::error!("{:?}", error);
-
-            Err(StatusCode::BAD_REQUEST)
-        }
+        Err(error) => match error.downcast::<StatusCode>() {
+            Ok(status_code) => Err(status_code),
+            Err(error) => {
+                tracing::error!("{:?}", error);
+                Err(StatusCode::BAD_REQUEST)
+            }
+        },
     }
 }
 
@@ -34,8 +36,24 @@ async fn greeting(id: String, request: Request) -> Result<Response> {
     let queries = Queries::try_parse_uri(request.uri());
 
     let access_key = queries.get("access_key");
-    let debug_mode = queries.get("debug").is_some_and(|d| d == "true");
-    let access_count = Counter::fetch_add(&id, access_key, debug_mode).await;
+
+    if request.method() == Method::DELETE {
+        // * Check if the access key is valid
+        if access_key.is_none() {
+            bail!(StatusCode::UNAUTHORIZED);
+        }
+
+        Counter::delete(&id, access_key.unwrap()).await?;
+
+        return Ok(StatusCode::OK.into_response());
+    }
+
+    let access_count = Counter::fetch_add(
+        &id,
+        access_key,
+        queries.get("debug").is_some_and(|d| d == "true"),
+    )
+    .await;
 
     // * Custom Timezone, default to Asia/Shanghai
     let tz = queries

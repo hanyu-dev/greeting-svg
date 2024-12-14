@@ -5,15 +5,17 @@ mod db;
 use std::{
     borrow::Cow,
     sync::{
-        atomic::{AtomicU64, AtomicUsize, Ordering},
+        atomic::{AtomicU64, Ordering},
         Arc, LazyLock, OnceLock,
     },
 };
 
-use anyhow::Result;
-use arc_swap::ArcSwap;
+use anyhow::{bail, Result};
+use axum::http::StatusCode;
 use dashmap::DashMap;
 use tokio::sync::mpsc;
+
+use crate::{config::CONF_MAX_COUNTERS, utils::auth};
 
 // === Static variables ===
 
@@ -24,14 +26,7 @@ static COUNTERS: LazyLock<DashMap<Arc<str>, AtomicU64, foldhash::fast::RandomSta
     });
 
 /// Persistent storage tx
-static DB_PERSISTENT_TX: OnceLock<mpsc::Sender<(Arc<str>, u64)>> = OnceLock::new();
-
-// === Configs ===
-
-/// New counter `access_key`
-static CONF_ACCESS_KEY: OnceLock<ArcSwap<String>> = OnceLock::new();
-/// Max number of counters
-static CONF_MAX_COUNTERS: AtomicUsize = AtomicUsize::new(131072);
+static DB_PERSISTENT_TX: OnceLock<mpsc::Sender<(Arc<str>, Option<u64>)>> = OnceLock::new();
 
 // === impls ===
 
@@ -41,8 +36,6 @@ pub(crate) struct Counter;
 impl Counter {
     /// Initialize the counter map
     pub(crate) async fn init(config: &crate::config::Config) {
-        Self::update_config(config);
-
         // Persistent storage
         // No need to log here when error occurs
         let _ = db::Persistent::init()
@@ -50,30 +43,6 @@ impl Counter {
             .map(|tx| DB_PERSISTENT_TX.set(tx));
 
         Self::insert_all(config.user_id.iter().map(|id| (id.clone(), 0)).collect());
-    }
-
-    /// Update counter related config from given
-    /// [Config](crate::config::Config).
-    pub(crate) fn update_config(config: &crate::config::Config) {
-        // * Update max counters limits
-        CONF_MAX_COUNTERS.store(config.max_counter, Ordering::Relaxed);
-
-        // * Update access_key
-        //
-        // * If we have access_key set, we replace the old access_key with the new one.
-        // * If new access_key is None, we do nothing and we have to restart the server.
-        if config
-            .access_key
-            .as_ref()
-            .is_some_and(|access_key| access_key.len() > 0)
-        {
-            let new_access_key = config.access_key.clone().unwrap();
-
-            match CONF_ACCESS_KEY.get() {
-                Some(access_key) => access_key.store(new_access_key),
-                None => CONF_ACCESS_KEY.set(ArcSwap::new(new_access_key)).unwrap(),
-            }
-        }
     }
 
     /// Insert counters into [COUNTERS].
@@ -105,33 +74,53 @@ impl Counter {
             }
         });
 
-        // ! verify access key when no corresponding counter exists
-        if current_count.is_none()
-            && access_key.zip((CONF_ACCESS_KEY).get()).is_some_and(
-                |(access_key, desired_access_key)| access_key == desired_access_key.load().as_str(),
-            )
-        {
-            Self::insert_counter(id.clone()).await;
-            Self::persist_data_tx(id.clone(), 1).await;
-            return Some(1);
-        }
-
         if current_count.is_some() {
             // Save to database.
-            Self::persist_data_tx(id, current_count.unwrap()).await;
+            Self::persist_data_tx(id, current_count).await;
+        } else if auth(access_key.map(AsRef::as_ref).unwrap_or("")) {
+            Self::insert_new_counter(id).await;
+            return Some(1);
+        } else {
+            // do nothing, access key does not match
+            tracing::warn!("Access key incorrect or config not set: {access_key:?}");
         }
 
         current_count
     }
 
     #[inline]
+    #[tracing::instrument(level = "debug")]
+    /// Delete a counter
+    pub(crate) async fn delete(id: &str, access_key: &str) -> Result<()> {
+        if !auth(access_key) {
+            tracing::warn!("Access key incorrect or config not set");
+            bail!(StatusCode::UNAUTHORIZED)
+        }
+
+        // Delete counter
+        if let Some((_, count)) = COUNTERS.remove(id) {
+            tracing::debug!(
+                "Deleted counter with count {}",
+                count.load(Ordering::Relaxed)
+            );
+
+            Self::persist_data_tx(id.into(), None).await;
+        } else {
+            tracing::debug!("Counter not found for [{id}]");
+            bail!(StatusCode::NOT_FOUND)
+        }
+
+        Ok(())
+    }
+
+    #[inline]
     /// Insert a new counter
-    async fn insert_counter(id: Arc<str>) {
+    async fn insert_new_counter(id: Arc<str>) {
         tokio::spawn(async move {
             tracing::info!("New counter for id [{}]", id);
 
             // Insert new counter
-            COUNTERS.insert(id, AtomicU64::new(1));
+            COUNTERS.insert(id.clone(), AtomicU64::new(1));
 
             // Check capacity
             if COUNTERS.len() > CONF_MAX_COUNTERS.load(Ordering::Acquire) {
@@ -151,6 +140,8 @@ impl Counter {
                     }
                 });
             }
+
+            Self::persist_data_tx(id, Some(1)).await;
         });
     }
 
@@ -158,7 +149,7 @@ impl Counter {
     /// Send persistent data to the database
     ///
     /// If database is not ready, this will be actually a no-op
-    async fn persist_data_tx(id: Arc<str>, new_count: u64) {
+    async fn persist_data_tx(id: Arc<str>, new_count: Option<u64>) {
         tokio::spawn(async move {
             if let Some(tx) = DB_PERSISTENT_TX.get() {
                 let _ = tx.send((id, new_count)).await;
@@ -173,7 +164,7 @@ impl Counter {
             let count = kv.load(Ordering::Acquire);
 
             if let Some(tx) = DB_PERSISTENT_TX.get() {
-                let _ = tx.send((id, count)).await;
+                let _ = tx.send((id, Some(count))).await;
             }
         }
 

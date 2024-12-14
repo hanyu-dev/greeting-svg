@@ -22,7 +22,7 @@ pub(super) struct Persistent;
 
 impl Persistent {
     #[tracing::instrument(err)]
-    pub(super) async fn init() -> Result<mpsc::Sender<(Arc<str>, u64)>> {
+    pub(super) async fn init() -> Result<mpsc::Sender<(Arc<str>, Option<u64>)>> {
         // init database
         #[cfg(feature = "sqlite")]
         SqliteImpl::init().await?;
@@ -38,8 +38,20 @@ impl Persistent {
                 tokio::spawn(async move {
                     let _permit = permit.acquire().await.unwrap();
 
-                    if let Err(e) = SqliteImpl::sqlite_write(id, count as i64).await {
-                        tracing::error!("Write to sqlite error: {}", e);
+                    match count {
+                        Some(count) => {
+                            tracing::debug!("Write to DB: {} {}", id, count);
+
+                            if let Err(e) = SqliteImpl::sqlite_write(id, count as i64).await {
+                                tracing::error!("Write to sqlite error: {}", e);
+                            }
+                        }
+                        None => {
+                            tracing::debug!("Delete from DB: {}", id);
+                            if let Err(e) = SqliteImpl::sqlite_delete(id).await {
+                                tracing::error!("Write to sqlite error: {}", e);
+                            }
+                        }
                     }
                 });
             }
@@ -166,6 +178,21 @@ impl SqliteImpl {
                     (&id, count),
                 )
                 .unwrap();
+            })
+            .await
+            .map_err(|e| anyhow!("{:#?}", e))
+    }
+
+    #[inline]
+    pub(super) async fn sqlite_delete(id: Arc<str>) -> Result<()> {
+        DB_POOL_SQLITE
+            .get()
+            .context("SQLite DB not initialized")?
+            .get()
+            .await?
+            .interact(move |conn| {
+                conn.execute("DELETE FROM counters WHERE id=?", (id,))
+                    .unwrap();
             })
             .await
             .map_err(|e| anyhow!("{:#?}", e))

@@ -1,8 +1,24 @@
-use std::{fs::File, net::SocketAddr, path::Path, sync::Arc};
+use std::{
+    fs::File,
+    net::SocketAddr,
+    path::Path,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, OnceLock,
+    },
+};
 
 use anyhow::{Context, Result};
+use arc_swap::ArcSwap;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
+
+// === Configs ===
+
+/// New counter `access_key`
+pub(crate) static CONF_ACCESS_KEY: OnceLock<ArcSwap<String>> = OnceLock::new();
+/// Max number of counters
+pub(crate) static CONF_MAX_COUNTERS: AtomicUsize = AtomicUsize::new(131072);
 
 #[derive(Debug, Parser, Serialize, Deserialize)]
 #[command(version, about, long_about = None)]
@@ -43,10 +59,37 @@ impl Config {
             let config: Config =
                 serde_json::from_reader(fs).with_context(|| "Parse config.json error")?;
 
+            config.update_config();
+
             return Ok(config);
         }
 
         tracing::info!("Read command line arguments...");
-        args.map_err(Into::into)
+        args.inspect(|config| config.update_config())
+            .map_err(Into::into)
+    }
+
+    /// Update counter related config from given
+    /// [Config](crate::config::Config).
+    pub(crate) fn update_config(&self) {
+        // * Update max counters limits
+        CONF_MAX_COUNTERS.store(self.max_counter, Ordering::Relaxed);
+
+        // * Update access_key
+        //
+        // * If we have access_key set, we replace the old access_key with the new one.
+        // * If new access_key is None, we do nothing and we have to restart the server.
+        if self
+            .access_key
+            .as_ref()
+            .is_some_and(|access_key| access_key.len() > 0)
+        {
+            let new_access_key = self.access_key.clone().unwrap();
+
+            match CONF_ACCESS_KEY.get() {
+                Some(access_key) => access_key.store(new_access_key),
+                None => CONF_ACCESS_KEY.set(ArcSwap::new(new_access_key)).unwrap(),
+            }
+        }
     }
 }

@@ -33,7 +33,10 @@ async fn main() -> Result<()> {
     let _ = axum::serve(
         tcp_listener,
         axum::Router::new()
-            .route("/greeting/:id", get(handler::axum_greeting))
+            .route(
+                "/greeting/:id",
+                get(handler::axum_greeting).delete(handler::axum_greeting),
+            )
             .layer(CompressionLayer::new())
             .layer(ServerTimingLayer::new(env!("CARGO_PKG_NAME")).with_description(utils::VERSION))
             .fallback(handler::fallback),

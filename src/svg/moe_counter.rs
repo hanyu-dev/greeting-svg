@@ -7,7 +7,6 @@ use crate::utils;
 
 include!(concat!(env!("OUT_DIR"), "/moe-counter.rs"));
 
-#[allow(dead_code)]
 #[derive(Debug)]
 /// Greeting data
 pub(crate) struct MoeCounterImpl<'i> {

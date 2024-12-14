@@ -5,6 +5,8 @@ use std::{borrow::Cow, collections::HashMap};
 use axum::http::Uri;
 use macro_toolset::wrapper;
 
+use crate::config::CONF_ACCESS_KEY;
+
 /// The version of the crate.
 pub(crate) static VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
 
@@ -49,4 +51,12 @@ impl<'q> Queries<'q> {
             .collect::<HashMap<_, _, _>>()
             .into()
     }
+}
+
+#[inline]
+/// Check request auth with `access_key`
+pub(crate) fn auth(access_key: &str) -> bool {
+    CONF_ACCESS_KEY
+        .get()
+        .is_some_and(|desired_access_key| desired_access_key.load().as_str() == access_key)
 }
