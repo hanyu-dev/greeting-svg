@@ -1,6 +1,6 @@
 // ! Moe Counter
 
-use macro_toolset::{str_concat, string::NumStr};
+use macro_toolset::{str_concat, string::{NumStr, StringExtT}};
 use rand::Rng;
 
 use crate::utils;
@@ -80,6 +80,9 @@ impl MoeCounterImpl<'_> {
 
         let images_number_vec = {
             let mut numbers_dight = Vec::new();
+
+            // Prefix, but does it make sense?
+            self.prefix.push_to_string(&mut numbers_dight);
 
             macro_rules! impl_const_resize_set {
                 ($($n:expr), *) => {
