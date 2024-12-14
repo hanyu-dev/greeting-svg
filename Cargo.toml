@@ -29,20 +29,25 @@ serde = { version = "1.0.216", features = ["derive", "rc"] }
 serde_json = { version = "1.0.133", features = ["preserve_order"] }
 svg = "0.18.0"
 tokio = { version = "1.42.0", features = ["macros", "net", "parking_lot", "rt-multi-thread", "signal", "time"] }
-tower-http = { version = "0.6.2", features = ["compression-zstd"] }
+tower-http = { version = "0.6.2", features = [
+    "compression-deflate",
+    "compression-gzip",
+    "compression-br",
+    "compression-zstd",
+] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "parking_lot"] }
 
 [target."cfg(unix)".dependencies]
 hyper = { version = "1.5.1", default-features = false, features = ["http1", "server"] }
-hyper-util = { version = "0.1", features = ["tokio", "server-auto", "http1"] }
+hyper-util = { version = "0.1.10", features = ["tokio", "server-auto", "http1"] }
 tower-service = "0.3.3"
 
 [build-dependencies]
 anyhow = "1.0.94"
 chrono = { version = "0.4.39", default-features = false, features = ["clock"] }
 imagesize = "0.13.0"
-macro-toolset = { version = "0.7.5", default-features = false, features = ["feat-string", "feat-string-ext-base64"] }
+macro-toolset = { version = "0.7.6", default-features = false, features = ["feat-string", "feat-string-ext-base64"] }
 
 [profile.release]
 opt-level = 3
@@ -56,7 +61,7 @@ default = ["sqlite-bundled"]
 
 # Store data in SQLite database
 sqlite = ["dep:deadpool-sqlite", "dep:rusqlite"]
-sqlite-bundled = ["sqlite", "rusqlite/bundled"] # For windows
+sqlite-bundled = ["sqlite", "rusqlite/bundled"]  # For windows
 
 # === Lints config ===
 
