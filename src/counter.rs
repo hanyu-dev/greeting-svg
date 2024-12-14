@@ -74,6 +74,12 @@ impl Counter {
             }
         });
 
+        if debug_mode {
+            tracing::debug!("Debug mode enabled, no count increase");
+
+            return current_count;
+        }
+
         if current_count.is_some() {
             // Save to database.
             Self::persist_data_tx(id, current_count).await;
