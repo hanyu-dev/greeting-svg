@@ -1,11 +1,12 @@
 //! Utilities
 
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, net::IpAddr};
 
 use axum::http::Uri;
 use macro_toolset::wrapper;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::config::CONF_ACCESS_KEY;
+use crate::config::{CONF_ACCESS_KEY, CONF_CIDR_WHITELIST};
 
 /// The version of the crate.
 pub(crate) static VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
@@ -55,8 +56,15 @@ impl<'q> Queries<'q> {
 
 #[inline]
 /// Check request auth with `access_key`
-pub(crate) fn auth(access_key: &str) -> bool {
-    CONF_ACCESS_KEY
+pub(crate) fn auth(access_key: Option<impl AsRef<str>>, remote_ip: Option<IpAddr>) -> bool {
+    remote_ip.is_some_and(|remote_ip| {
+        CONF_CIDR_WHITELIST
+            .par_iter()
+            .any(|cidr_whitelist| cidr_whitelist.contains(&remote_ip))
+    }) || CONF_ACCESS_KEY
         .get()
-        .is_some_and(|desired_access_key| desired_access_key.load().as_str() == access_key)
+        .zip(access_key)
+        .is_some_and(|(desired_access_key, access_key)| {
+            desired_access_key.load().as_str() == access_key.as_ref()
+        })
 }

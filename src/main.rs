@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
 
     let config = config::Config::parse()?;
 
-    tracing::info!("{:?}", config);
+    tracing::info!("{:#?}", config);
 
     counter::Counter::init(&config).await;
 

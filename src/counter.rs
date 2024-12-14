@@ -4,6 +4,7 @@ mod db;
 
 use std::{
     borrow::Cow,
+    net::IpAddr,
     sync::{
         atomic::{AtomicU64, Ordering},
         Arc, LazyLock, OnceLock,
@@ -63,6 +64,7 @@ impl Counter {
         id: &str,
         access_key: Option<&Cow<'_, str>>,
         debug_mode: bool,
+        remote_ip: Option<IpAddr>,
     ) -> Option<u64> {
         let id: Arc<str> = id.into();
 
@@ -83,7 +85,7 @@ impl Counter {
         if current_count.is_some() {
             // Save to database.
             Self::persist_data_tx(id, current_count).await;
-        } else if auth(access_key.map(AsRef::as_ref).unwrap_or("")) {
+        } else if auth(access_key, remote_ip) {
             Self::insert_new_counter(id).await;
             return Some(1);
         } else {
@@ -97,8 +99,12 @@ impl Counter {
     #[inline]
     #[tracing::instrument(level = "debug")]
     /// Delete a counter
-    pub(crate) async fn delete(id: &str, access_key: &str) -> Result<()> {
-        if !auth(access_key) {
+    pub(crate) async fn delete(
+        id: &str,
+        access_key: Option<&Cow<'_, str>>,
+        remote_ip: Option<IpAddr>,
+    ) -> Result<()> {
+        if !auth(access_key, remote_ip) {
             tracing::warn!("Access key incorrect or config not set");
             bail!(StatusCode::UNAUTHORIZED)
         }

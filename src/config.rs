@@ -5,13 +5,15 @@ use std::{
     str::FromStr,
     sync::{
         atomic::{AtomicUsize, Ordering},
-        Arc, OnceLock,
+        Arc, LazyLock, OnceLock,
     },
 };
 
 use anyhow::{Context, Result};
 use arc_swap::ArcSwap;
+use cidr::IpCidr;
 use clap::Parser;
+use dashmap::DashSet;
 use serde::{Deserialize, Serialize};
 
 // === Configs ===
@@ -20,6 +22,9 @@ use serde::{Deserialize, Serialize};
 pub(crate) static CONF_ACCESS_KEY: OnceLock<ArcSwap<String>> = OnceLock::new();
 /// Max number of counters
 pub(crate) static CONF_MAX_COUNTERS: AtomicUsize = AtomicUsize::new(131072);
+/// CIDR Whitelist
+pub(crate) static CONF_CIDR_WHITELIST: LazyLock<DashSet<IpCidr, foldhash::fast::RandomState>> =
+    LazyLock::new(DashSet::default);
 
 #[derive(Debug, Parser, Serialize, Deserialize)]
 #[command(version, about, long_about = None)]
@@ -34,6 +39,13 @@ pub(crate) struct Config {
     /// If not set, no new counters can be added and use the existing ones from
     /// the config.
     pub access_key: Option<Arc<String>>,
+
+    #[arg(long, default_value = "127.0.0.0/8")]
+    /// CIDR Whitelist
+    ///
+    /// The IP address within the whitelist can add new counters without
+    /// `access_key`.
+    cidr_whitelist: Vec<IpCidr>,
 
     #[arg(short, long)]
     /// Authorized user ids
@@ -91,6 +103,12 @@ impl Config {
                 Some(access_key) => access_key.store(new_access_key),
                 None => CONF_ACCESS_KEY.set(ArcSwap::new(new_access_key)).unwrap(),
             }
+        }
+
+        // * Update CIDR whitelist
+        CONF_CIDR_WHITELIST.clear();
+        for &cidr in self.cidr_whitelist.iter() {
+            CONF_CIDR_WHITELIST.insert(cidr);
         }
     }
 }

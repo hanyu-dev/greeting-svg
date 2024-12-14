@@ -1,10 +1,12 @@
 //! Request Handlers
 
-use anyhow::{bail, Result};
+use std::net::IpAddr;
+
+use anyhow::Result;
 use axum::{
     body::Body,
     extract::{Path, Request},
-    http::{header::CONTENT_TYPE, HeaderValue, Method, StatusCode},
+    http::{header::CONTENT_TYPE, HeaderName, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
 };
 
@@ -35,25 +37,29 @@ pub(crate) async fn axum_greeting(
 async fn greeting(id: String, request: Request) -> Result<Response> {
     let queries = Queries::try_parse_uri(request.uri());
 
+    const X_FORWARDED_FOR: HeaderName = HeaderName::from_static("x-forwarded-for");
+
+    let remote_ip: Option<IpAddr> = request
+        .headers()
+        .get(X_FORWARDED_FOR)
+        .and_then(|s| s.to_str().ok())
+        .and_then(|s| s.parse().ok());
+
     let access_key = queries.get("access_key");
 
-    if request.method() == Method::DELETE {
-        // * Check if the access key is valid
-        if access_key.is_none() {
-            bail!(StatusCode::UNAUTHORIZED);
-        }
-
-        Counter::delete(&id, access_key.unwrap()).await?;
+    let access_count = if request.method() == Method::DELETE {
+        Counter::delete(&id, access_key, remote_ip).await?;
 
         return Ok(StatusCode::OK.into_response());
-    }
-
-    let access_count = Counter::fetch_add(
-        &id,
-        access_key,
-        queries.get("debug").is_some_and(|d| d == "true"),
-    )
-    .await;
+    } else {
+        Counter::fetch_add(
+            &id,
+            access_key,
+            queries.get("debug").is_some_and(|d| d == "true"),
+            remote_ip,
+        )
+        .await
+    };
 
     // * Custom Timezone, default to Asia/Shanghai
     let tz = queries
