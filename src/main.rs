@@ -6,6 +6,10 @@ mod handler;
 mod svg;
 mod utils;
 
+#[cfg(unix)]
+use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
+use std::time::Duration;
+
 use anyhow::{Context, Result};
 use axum::routing::get;
 use macro_toolset::init_tracing_simple;
@@ -68,6 +72,11 @@ async fn main() -> Result<()> {
                         .unwrap();
 
                     loop {
+                        if UDS_CONN_SHOULD_STOP.load(Ordering::Relaxed) {
+                            tracing::info!("Graceful shutdown UDS connections");
+                            break;
+                        };
+
                         let (stream, _) = match uds_listener.accept().await {
                             Ok(stream) => stream,
                             Err(err) => {
@@ -94,6 +103,8 @@ async fn main() -> Result<()> {
                         let tower_service = make_service.call(&stream).await.unwrap();
 
                         tokio::spawn(async move {
+                            UDS_CONN_COUNT.fetch_add(1, Ordering::AcqRel);
+
                             let socket = TokioIo::new(stream);
 
                             let hyper_service =
@@ -107,6 +118,8 @@ async fn main() -> Result<()> {
                             {
                                 tracing::error!("Failed to serve connection: {err:#}");
                             }
+
+                            UDS_CONN_COUNT.fetch_sub(1, Ordering::AcqRel);
                         });
                     }
                 })
@@ -119,6 +132,12 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(unix)]
+static UDS_CONN_COUNT: AtomicIsize = AtomicIsize::new(0);
+
+#[cfg(unix)]
+static UDS_CONN_SHOULD_STOP: AtomicBool = AtomicBool::new(false);
 
 /// axum graceful shutdown signal
 async fn shutdown_signal() {
@@ -137,11 +156,36 @@ async fn shutdown_signal() {
             tracing::info!("Received SIGHUP");
         }
     }
+
+    #[cfg(unix)]
+    UDS_CONN_SHOULD_STOP.store(true, Ordering::Relaxed);
 }
 
 /// Post task after the server stopped
 async fn post_task() -> Result<()> {
     counter::Counter::persist_all().await?;
+
+    #[cfg(unix)]
+    {
+        let mut count = 0;
+        loop {
+            if count >= 15 {
+                tracing::error!("Force exit after 15s");
+
+                break;
+            }
+
+            if UDS_CONN_COUNT.load(Ordering::Acquire) <= 0 {
+                tracing::info!("All UDS connections were closed");
+
+                break;
+            }
+
+            count += 1;
+
+            tokio::time::sleep(Duration::from_secs(1)).await
+        }
+    }
 
     Ok(())
 }
