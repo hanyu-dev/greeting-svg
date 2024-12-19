@@ -35,7 +35,7 @@ impl GeneralImpl<'_> {
             "Cards | Jerry Zhou and Hantong Chen",
             "</title>",
             // Image on the right side
-            r#"<g id="image"><line class="line" y1="20" y2="135" x1="300.5" x2="300.5"/>"#,
+            r#"<g id="image"><line class="line" y1="20" y2="120" x1="300.5" x2="300.5"/>"#,
             r#"<image class="bg" href=""#,
             include_str!("../assets/image/marisa-kirisame.png.data"),
             r#"" transform="translate(300.5, 28) scale(0.42)"/></g>"#,
@@ -73,17 +73,17 @@ impl GeneralImpl<'_> {
         };
 
         str_concat!(
-            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 145" fr-init-rc="true">"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 140" fr-init-rc="true">"#,
             // Static data
             SVG_STATIC_DATA,
             // Group: detail
             r#"<g id="detail">"#,
-            r#"<text class="text" transform="translate(20 35)">欢迎您，"#,
+            r#"<text class="text" transform="translate(16 30)">欢迎您，"#,
             self.access_count
                 .with_prefix("第 ")
                 .with_suffix(" 位访问本页面的"),
             r#"朋友 🎉</text>"#,
-            r#"<text class="text" transform="translate(20 65)">今天是 "#,
+            r#"<text class="text" transform="translate(16 60)">今天是 "#,
             now_year,
             r#" 年 "#,
             now_month,
@@ -92,12 +92,12 @@ impl GeneralImpl<'_> {
             r#" 日，星期"#,
             now_weekday,
             r#"</text>"#,
-            r#"<text class="text" transform="translate(20 95)">已经是今年的第 "#,
+            r#"<text class="text" transform="translate(16 90)">已经是今年的第 "#,
             ordinal,
             r#" 天啦，离年末还有 "#,
             ordinal_left,
             " 天</text>",
-            note.with_prefix(r#"<text class="text" transform="translate(20 125)">"#)
+            note.with_prefix(r#"<text class="text" transform="translate(16 120)">"#)
                 .with_suffix(r#"</text>"#),
             "</g>",
             // End SVG
