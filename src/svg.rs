@@ -1,12 +1,12 @@
 pub(crate) mod moe_counter;
 
-use std::{borrow::Cow, sync::LazyLock};
+use std::borrow::Cow;
 
 use chrono::{Datelike, Utc, Weekday};
 use chrono_tz::Tz;
-use macro_toolset::str_concat;
+use macro_toolset::{str_concat, string::StringExtT};
 
-static AMMONIA: LazyLock<ammonia::Builder<'static>> = LazyLock::new(ammonia::Builder::default);
+use crate::utils::ammonia::get_filterd_note;
 
 #[derive(Debug)]
 /// Greeting data
@@ -64,6 +64,17 @@ impl GeneralImpl<'_> {
             365
         } - ordinal;
 
+        let note = if let Some(note) = self.note {
+            Some(
+                get_filterd_note(note)
+                    .await
+                    .map(|note| (Some(note), None)) // emmm, very trickery
+                    .unwrap_or((None, self.note)),
+            )
+        } else {
+            None
+        };
+
         str_concat!(
             r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 180" id="FmjApd" fr-init-rc="true">"#,
             // Static data
@@ -95,11 +106,8 @@ impl GeneralImpl<'_> {
             r#" 年末还有 "#,
             ordinal_left,
             " 天</text>",
-            self.note.map(|note| (
-                r#"<text class="text" transform="translate(20 155)">"#,
-                AMMONIA.clean(note),
-                r#"</text>"#
-            )),
+            note.with_prefix(r#"<text class="text" transform="translate(20 155)">"#)
+                .with_suffix(r#"</text>"#),
             "</g>",
             // End SVG
             "</svg>"

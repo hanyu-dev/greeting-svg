@@ -1,5 +1,7 @@
 //! Utilities
 
+pub(crate) mod ammonia;
+
 use std::{borrow::Cow, collections::HashMap, net::IpAddr};
 
 use axum::http::Uri;

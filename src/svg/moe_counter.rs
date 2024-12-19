@@ -1,6 +1,9 @@
 // ! Moe Counter
 
-use macro_toolset::{str_concat, string::{NumStr, StringExtT}};
+use macro_toolset::{
+    str_concat,
+    string::{NumStr, StringExtT},
+};
 use rand::Rng;
 
 use crate::utils;
