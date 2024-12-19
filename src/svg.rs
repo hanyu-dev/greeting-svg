@@ -1,10 +1,12 @@
 pub(crate) mod moe_counter;
 
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::LazyLock};
 
 use chrono::{Datelike, Utc, Weekday};
 use chrono_tz::Tz;
 use macro_toolset::str_concat;
+
+static AMMONIA: LazyLock<ammonia::Builder<'static>> = LazyLock::new(ammonia::Builder::default);
 
 #[derive(Debug)]
 /// Greeting data
@@ -93,11 +95,11 @@ impl GeneralImpl<'_> {
             r#" 年末还有 "#,
             ordinal_left,
             " 天</text>",
-            self.note.map(|note| [
+            self.note.map(|note| (
                 r#"<text class="text" transform="translate(20 155)">"#,
-                note,
+                AMMONIA.clean(note),
                 r#"</text>"#
-            ]),
+            )),
             "</g>",
             // End SVG
             "</svg>"
