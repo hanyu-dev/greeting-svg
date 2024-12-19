@@ -73,7 +73,7 @@ impl GeneralImpl<'_> {
         };
 
         str_concat!(
-            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 180" id="FmjApd" fr-init-rc="true">"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 145" fr-init-rc="true">"#,
             // Static data
             SVG_STATIC_DATA,
             // Group: detail
