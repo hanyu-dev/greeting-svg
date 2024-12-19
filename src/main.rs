@@ -176,7 +176,7 @@ async fn post_task() -> Result<()> {
             }
 
             if UDS_CONN_COUNT.load(Ordering::Acquire) <= 0 {
-                tracing::info!("All UDS connections were closed");
+                tracing::info!("All possible UDS connections were closed");
 
                 break;
             }
