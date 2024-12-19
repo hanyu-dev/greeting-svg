@@ -64,15 +64,12 @@ impl GeneralImpl<'_> {
             365
         } - ordinal;
 
-        let note = if let Some(note) = self.note {
-            Some(
-                get_filterd_note(note)
-                    .await
-                    .map(|note| (Some(note), None)) // emmm, very trickery
-                    .unwrap_or((None, self.note)),
-            )
-        } else {
-            None
+        let note = match self.note {
+            Some(note) => {
+                let filtered_note = get_filterd_note(note).await;
+                filtered_note.map_or((None, self.note), |note| (Some(note), None))
+            },
+            None => (None, None),
         };
 
         str_concat!(
