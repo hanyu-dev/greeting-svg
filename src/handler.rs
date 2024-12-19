@@ -1,8 +1,8 @@
 //! Request Handlers
 
-use std::net::IpAddr;
+use std::{borrow::Cow, net::IpAddr};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use axum::{
     body::Body,
     extract::{Path, Request},
@@ -15,13 +15,10 @@ use crate::{counter::Counter, svg, utils::Queries};
 #[inline]
 #[tracing::instrument]
 /// Greeting router
-pub(crate) async fn axum_greeting(
-    Path(id): Path<String>,
-    request: Request,
-) -> Result<Response, StatusCode> {
+pub(crate) async fn axum_greeting_no_path(request: Request) -> Result<Response, StatusCode> {
     tracing::debug!("Accepted request.");
 
-    match greeting(id, request).await {
+    match greeting(None, request).await {
         Ok(greeting) => Ok(greeting),
         Err(error) => match error.downcast::<StatusCode>() {
             Ok(status_code) => Err(status_code),
@@ -34,10 +31,37 @@ pub(crate) async fn axum_greeting(
 }
 
 #[inline]
-async fn greeting(id: String, request: Request) -> Result<Response> {
+#[tracing::instrument]
+/// Greeting router
+pub(crate) async fn axum_greeting(
+    Path(id): Path<Cow<'static, str>>,
+    request: Request,
+) -> Result<Response, StatusCode> {
+    tracing::debug!("Accepted request.");
+
+    match greeting(Some(id), request).await {
+        Ok(greeting) => Ok(greeting),
+        Err(error) => match error.downcast::<StatusCode>() {
+            Ok(status_code) => Err(status_code),
+            Err(error) => {
+                tracing::error!("{:?}", error);
+                Err(StatusCode::BAD_REQUEST)
+            }
+        },
+    }
+}
+
+const X_FORWARDED_FOR: HeaderName = HeaderName::from_static("x-forwarded-for");
+
+#[inline]
+async fn greeting(id: Option<Cow<'_, str>>, request: Request) -> Result<Response> {
     let queries = Queries::try_parse_uri(request.uri());
 
-    const X_FORWARDED_FOR: HeaderName = HeaderName::from_static("x-forwarded-for");
+    let id = id
+        .as_ref()
+        .or_else(|| queries.get("key"))
+        .take_if(|id| !id.is_empty())
+        .context("Invalid id, empty or not given.")?;
 
     let remote_ip: Option<IpAddr> = request
         .headers()
@@ -48,12 +72,12 @@ async fn greeting(id: String, request: Request) -> Result<Response> {
     let access_key = queries.get("access_key");
 
     let access_count = if request.method() == Method::DELETE {
-        Counter::delete(&id, access_key, remote_ip).await?;
+        Counter::delete(id, access_key, remote_ip).await?;
 
         return Ok(StatusCode::OK.into_response());
     } else {
         Counter::fetch_add(
-            &id,
+            id,
             access_key,
             queries.get("debug").is_some_and(|d| d == "true"),
             remote_ip,
@@ -100,12 +124,10 @@ async fn greeting(id: String, request: Request) -> Result<Response> {
         }
         .generate(access_count.unwrap_or_default()),
         _ => {
-            // * Note
-            let note = queries.get("note");
             svg::GeneralImpl {
                 tz,
                 access_count,
-                note,
+                note: queries.get("note"),
             }
             .generate()
             .await
@@ -123,7 +145,6 @@ async fn greeting(id: String, request: Request) -> Result<Response> {
 }
 
 #[inline]
-// TODO: Shutdown connection immediately
 pub(crate) async fn not_found(_request: Request) -> Response {
     StatusCode::NOT_FOUND.into_response()
 }

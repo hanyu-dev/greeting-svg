@@ -33,6 +33,10 @@ async fn main() -> Result<()> {
 
     let service = axum::Router::new()
         .route(
+            "/greeting",
+            get(handler::axum_greeting_no_path).delete(handler::axum_greeting_no_path),
+        )
+        .route(
             "/greeting/:id",
             get(handler::axum_greeting).delete(handler::axum_greeting),
         )
