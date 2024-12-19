@@ -35,10 +35,10 @@ impl GeneralImpl<'_> {
             "Cards | Jerry Zhou and Hantong Chen",
             "</title>",
             // Image on the right side
-            r#"<g id="image"><line class="line" y1="20" y2="170" x1="300.5" x2="300.5"/>"#,
+            r#"<g id="image"><line class="line" y1="20" y2="135" x1="300.5" x2="300.5"/>"#,
             r#"<image class="bg" href=""#,
             include_str!("../assets/image/marisa-kirisame.png.data"),
-            r#"" transform="translate(300.5, 32) scale(0.5)"/></g>"#,
+            r#"" transform="translate(300.5, 28) scale(0.42)"/></g>"#,
         );
 
         let now = Utc::now().with_timezone(&self.tz);
@@ -68,7 +68,7 @@ impl GeneralImpl<'_> {
             Some(note) => {
                 let filtered_note = get_filterd_note(note).await;
                 filtered_note.map_or((None, self.note), |note| (Some(note), None))
-            },
+            }
             None => (None, None),
         };
 
@@ -78,32 +78,26 @@ impl GeneralImpl<'_> {
             SVG_STATIC_DATA,
             // Group: detail
             r#"<g id="detail">"#,
-            r#"<text class="text" transform="translate(20 35)">欢迎您，第 "#,
-            self.access_count,
-            if self.access_count.is_some() {
-                None
-            } else {
-                Some("NaN")
-            },
-            r#" 位访问本页面的朋友 🎉</text>"#,
+            r#"<text class="text" transform="translate(20 35)">欢迎您，"#,
+            self.access_count
+                .with_prefix("第 ")
+                .with_suffix(" 位访问本页面的"),
+            r#"朋友 🎉</text>"#,
             r#"<text class="text" transform="translate(20 65)">今天是 "#,
+            now_year,
+            r#" 年 "#,
             now_month,
             r#" 月 "#,
             now_day,
             r#" 日，星期"#,
             now_weekday,
             r#"</text>"#,
-            r#"<text class="text" transform="translate(20 95)">也是 "#,
-            now_year,
-            r#" 年的第 "#,
+            r#"<text class="text" transform="translate(20 95)">已经是今年的第 "#,
             ordinal,
-            r#" 天</text>"#,
-            r#"<text class="text" transform="translate(20 125)">距离 "#,
-            now_year,
-            r#" 年末还有 "#,
+            r#" 天啦，离年末还有 "#,
             ordinal_left,
             " 天</text>",
-            note.with_prefix(r#"<text class="text" transform="translate(20 155)">"#)
+            note.with_prefix(r#"<text class="text" transform="translate(20 125)">"#)
                 .with_suffix(r#"</text>"#),
             "</g>",
             // End SVG
