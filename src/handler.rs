@@ -122,6 +122,12 @@ async fn greeting(id: String, request: Request) -> Result<Response> {
         .map_err(Into::into)
 }
 
+#[inline]
+// TODO: Shutdown connection immediately
+pub(crate) async fn not_found(_request: Request) -> Response {
+    StatusCode::NOT_FOUND.into_response()
+}
+
 #[tracing::instrument]
 #[inline]
 // TODO: Shutdown connection immediately

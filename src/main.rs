@@ -36,10 +36,7 @@ async fn main() -> Result<()> {
             "/greeting/:id",
             get(handler::axum_greeting).delete(handler::axum_greeting),
         )
-        .route(
-            "/favicon.ico",
-            any(async || axum::http::StatusCode::NOT_FOUND),
-        )
+        .route("/favicon.ico", any(handler::not_found))
         .layer(CompressionLayer::new())
         .layer(ServerTimingLayer::new(env!("CARGO_PKG_NAME")).with_description(utils::VERSION))
         .fallback(handler::fallback);
