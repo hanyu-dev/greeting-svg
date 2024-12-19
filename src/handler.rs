@@ -122,10 +122,11 @@ async fn greeting(id: String, request: Request) -> Result<Response> {
         .map_err(Into::into)
 }
 
+#[tracing::instrument]
 #[inline]
 // TODO: Shutdown connection immediately
 pub(crate) async fn fallback(request: Request) -> Response {
-    tracing::warn!(?request, "No available handler");
+    tracing::warn!("No available handler");
 
     StatusCode::NOT_FOUND.into_response()
 }

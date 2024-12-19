@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use axum::routing::get;
+use axum::routing::{any, get};
 use macro_toolset::init_tracing_simple;
 use miku_server_timing::ServerTimingLayer;
 use tokio::net::TcpListener;
@@ -35,6 +35,10 @@ async fn main() -> Result<()> {
         .route(
             "/greeting/:id",
             get(handler::axum_greeting).delete(handler::axum_greeting),
+        )
+        .route(
+            "/favicon.ico",
+            any(async || axum::http::StatusCode::NOT_FOUND),
         )
         .layer(CompressionLayer::new())
         .layer(ServerTimingLayer::new(env!("CARGO_PKG_NAME")).with_description(utils::VERSION))
