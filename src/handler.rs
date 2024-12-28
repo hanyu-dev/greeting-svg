@@ -127,6 +127,10 @@ async fn greeting(id: Option<Cow<'_, str>>, request: Request) -> Result<Response
             svg::GeneralImpl {
                 tz,
                 access_count,
+                bg_type: queries
+                    .get("bg_type")
+                    .map(|bg_type| bg_type.parse().unwrap())
+                    .unwrap_or_default(),
                 note: queries.get("note"),
             }
             .generate()
