@@ -1,6 +1,6 @@
 [package]
 name = "greeting-svg"
-version = "0.2.5-rc.1"
+version = "0.2.5-rc.2"
 edition = "2021"
 authors = ["Hantong Chen"]
 license = "MIT"
@@ -10,30 +10,30 @@ rust-version = "1.82"
 ammonia = "4.0.0"
 anyhow = "1.0.95"
 arc-swap = "1.7.1"
-axum = { version = "0.7.9", default-features = false, features = ["http1", "http2", "tokio"] }
+axum = { version = "0.8.1", default-features = false, features = ["http1", "http2", "tokio"] }
 bytes = "1.9.0"
 chrono = { version = "0.4.39", default-features = false, features = ["now", "std", "clock"] }
-chrono-tz = "0.10.0"
-cidr = { version = "0.3.0", features = ["serde"] }
-clap = { version = "4.5.23", features = ["derive"] }
+chrono-tz = "0.10.1"
+cidr = { version = "0.3.1", features = ["serde"] }
+clap = { version = "4.5.27", features = ["derive"] }
 dashmap = { version = "6.1.0", features = ["inline", "rayon"] }
 deadpool-sqlite = { version = "0.9.0", optional = true }
 fluent-uri = "0.3.2"
 foldhash = "0.1.4"
-macro-toolset = { version = "0.8.0-rc.2", default-features = false, features = [
+macro-toolset = { version = "0.8.0", default-features = false, features = [
     "feat-string",
     "feat-string-ext-ammonia",
     "feat-string-ext-ryu",
 ] }
-miku-server-timing = "0.1.2"
+miku-server-timing = "0.2.0"
 mimalloc = "0.1.43"
-rand = "0.8.5"
+rand = "0.9.0"
 rayon = "1.10.0"
 rusqlite = { version = "0.32.1", optional = true }
 serde = { version = "1.0.217", features = ["derive", "rc"] }
-serde_json = { version = "1.0.134", features = ["preserve_order"] }
+serde_json = { version = "1.0.138", features = ["preserve_order"] }
 svg = "0.18.0"
-tokio = { version = "1.42.0", features = ["macros", "net", "parking_lot", "rt-multi-thread", "signal", "time"] }
+tokio = { version = "1.43.0", features = ["macros", "net", "parking_lot", "rt-multi-thread", "signal", "time"] }
 tower-http = { version = "0.6.2", features = [
     "compression-deflate",
     "compression-gzip",
@@ -43,16 +43,11 @@ tower-http = { version = "0.6.2", features = [
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "parking_lot"] }
 
-[target."cfg(unix)".dependencies]
-hyper = { version = "1.5.2", default-features = false, features = ["http1", "server"] }
-hyper-util = { version = "0.1.10", features = ["tokio", "server-auto", "http1"] }
-tower-service = "0.3.3"
-
 [build-dependencies]
 anyhow = "1.0.95"
 chrono = { version = "0.4.39", default-features = false, features = ["clock"] }
 imagesize = "0.13.0"
-macro-toolset = { version = "0.7.13", default-features = false, features = ["feat-string", "feat-string-ext-base64"] }
+macro-toolset = { version = "0.8.0", default-features = false, features = ["feat-string", "feat-string-ext-base64"] }
 
 [profile.release]
 opt-level = 3

@@ -4,7 +4,7 @@ use std::{borrow::Cow, convert::Infallible, str::FromStr};
 
 use chrono::{Datelike, TimeZone, Utc, Weekday};
 use chrono_tz::Tz;
-use macro_toolset::{str_concat_v2 as str_concat, string_v2::StringExtT};
+use macro_toolset::{str_concat, string::StringExtT};
 
 use crate::utils::ammonia::get_filterd_note;
 

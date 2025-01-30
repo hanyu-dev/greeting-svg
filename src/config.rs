@@ -95,7 +95,7 @@ impl Config {
         if self
             .access_key
             .as_ref()
-            .is_some_and(|access_key| access_key.len() > 0)
+            .is_some_and(|access_key| !access_key.is_empty())
         {
             let new_access_key = self.access_key.clone().unwrap();
 

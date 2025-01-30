@@ -2,7 +2,7 @@
 
 use macro_toolset::{
     str_concat,
-    string::{NumStr, StringExtT},
+    string::{NumStr, StringT},
 };
 use rand::Rng;
 
@@ -85,7 +85,7 @@ impl MoeCounterImpl<'_> {
             let mut numbers_dight = Vec::new();
 
             // Prefix, but does it make sense?
-            self.prefix.push_to_string(&mut numbers_dight);
+            self.prefix.encode_to_buf(&mut numbers_dight);
 
             macro_rules! impl_const_resize_set {
                 ($($n:expr), *) => {
@@ -237,7 +237,7 @@ impl MoeCounterImpl<'_> {
     fn get_moe_counter(&self) -> moe_counter_list::MoeCounter {
         let theme = if self.theme == "random" {
             moe_counter_list::THEMES_LIST
-                [rand::thread_rng().gen_range(0..moe_counter_list::THEMES_LIST.len())]
+                [rand::rng().random_range(0..moe_counter_list::THEMES_LIST.len())]
         } else {
             self.theme
         };
