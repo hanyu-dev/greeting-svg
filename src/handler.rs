@@ -59,8 +59,10 @@ async fn greeting(id: Option<Cow<'_, str>>, request: Request) -> Result<Response
 
     let id = id
         .as_ref()
+        .or_else(|| queries.get("id"))
         .or_else(|| queries.get("key"))
         .take_if(|id| !id.is_empty())
+        .map(|id| id.trim_start_matches("@"))
         .context("Invalid id, empty or not given.")?;
 
     let remote_ip: Option<IpAddr> = request
