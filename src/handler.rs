@@ -18,7 +18,7 @@ use crate::{counter::Counter, svg, utils::Queries};
 pub(crate) async fn axum_greeting_no_path(request: Request) -> Result<Response, StatusCode> {
     tracing::debug!("Accepted request.");
 
-    match greeting(None, request).await {
+    match greeting::<false>(None, request).await {
         Ok(greeting) => Ok(greeting),
         Err(error) => match error.downcast::<StatusCode>() {
             Ok(status_code) => Err(status_code),
@@ -39,7 +39,46 @@ pub(crate) async fn axum_greeting(
 ) -> Result<Response, StatusCode> {
     tracing::debug!("Accepted request.");
 
-    match greeting(Some(id), request).await {
+    match greeting::<false>(Some(id), request).await {
+        Ok(greeting) => Ok(greeting),
+        Err(error) => match error.downcast::<StatusCode>() {
+            Ok(status_code) => Err(status_code),
+            Err(error) => {
+                tracing::error!("{:?}", error);
+                Err(StatusCode::BAD_REQUEST)
+            }
+        },
+    }
+}
+
+#[inline]
+#[tracing::instrument]
+/// Moe counter router
+pub(crate) async fn axum_moe_counter_no_path(request: Request) -> Result<Response, StatusCode> {
+    tracing::debug!("Accepted request.");
+
+    match greeting::<true>(None, request).await {
+        Ok(greeting) => Ok(greeting),
+        Err(error) => match error.downcast::<StatusCode>() {
+            Ok(status_code) => Err(status_code),
+            Err(error) => {
+                tracing::error!("{:?}", error);
+                Err(StatusCode::BAD_REQUEST)
+            }
+        },
+    }
+}
+
+#[inline]
+#[tracing::instrument]
+/// Moe counter router
+pub(crate) async fn axum_moe_counter(
+    Path(id): Path<Cow<'static, str>>,
+    request: Request,
+) -> Result<Response, StatusCode> {
+    tracing::debug!("Accepted request.");
+
+    match greeting::<true>(Some(id), request).await {
         Ok(greeting) => Ok(greeting),
         Err(error) => match error.downcast::<StatusCode>() {
             Ok(status_code) => Err(status_code),
@@ -54,7 +93,10 @@ pub(crate) async fn axum_greeting(
 const X_FORWARDED_FOR: HeaderName = HeaderName::from_static("x-forwarded-for");
 
 #[inline]
-async fn greeting(id: Option<Cow<'_, str>>, request: Request) -> Result<Response> {
+async fn greeting<const FORCE_MOE_COUNTER: bool>(
+    id: Option<Cow<'_, str>>,
+    request: Request,
+) -> Result<Response> {
     let queries = Queries::try_parse_uri(request.uri());
 
     let id = id
@@ -65,39 +107,34 @@ async fn greeting(id: Option<Cow<'_, str>>, request: Request) -> Result<Response
         .map(|id| id.trim_start_matches("@"))
         .context("Invalid id, empty or not given.")?;
 
-    let remote_ip: Option<IpAddr> = request
-        .headers()
-        .get(X_FORWARDED_FOR)
-        .and_then(|s| s.to_str().ok())
-        .and_then(|s| s.parse().ok());
+    let access_count = {
+        let remote_ip: Option<IpAddr> = request
+            .headers()
+            .get(X_FORWARDED_FOR)
+            .and_then(|s| s.to_str().ok())
+            .and_then(|s| s.parse().ok());
+        let access_key = queries.get("access_key");
 
-    let access_key = queries.get("access_key");
+        if request.method() == Method::DELETE {
+            Counter::delete(id, access_key, remote_ip).await?;
 
-    let access_count = if request.method() == Method::DELETE {
-        Counter::delete(id, access_key, remote_ip).await?;
-
-        return Ok(StatusCode::OK.into_response());
-    } else {
-        Counter::fetch_add(
-            id,
-            access_key,
-            queries.get("debug").is_some_and(|d| d == "true"),
-            remote_ip,
-        )
-        .await
+            return Ok(StatusCode::OK.into_response());
+        } else {
+            Counter::fetch_add(
+                id,
+                access_key,
+                queries.get("debug").is_some_and(|d| d == "true"),
+                remote_ip,
+            )
+            .await
+        }
     };
-
-    // * Custom Timezone, default to Asia/Shanghai
-    let tz = queries
-        .get("timezone")
-        .and_then(|tz| tz.parse().ok())
-        .unwrap_or(chrono_tz::Tz::Asia__Shanghai);
 
     // * Greeting type, can be moe-counter, or default one.
     let greeting_type = queries.get("type").map(AsRef::as_ref);
 
     let mut content = match greeting_type {
-        Some("moe-counter") => svg::moe_counter::MoeCounterImpl {
+        Some("moe-counter") | _ if FORCE_MOE_COUNTER => svg::moe_counter::MoeCounterImpl {
             theme: queries
                 .get("theme")
                 .map(AsRef::as_ref)
@@ -126,6 +163,12 @@ async fn greeting(id: Option<Cow<'_, str>>, request: Request) -> Result<Response
         }
         .generate(access_count.unwrap_or_default()),
         _ => {
+            // * Custom Timezone, default to Asia/Shanghai
+            let tz = queries
+                .get("timezone")
+                .and_then(|tz| tz.parse().ok())
+                .unwrap_or(chrono_tz::Tz::Asia__Shanghai);
+
             svg::GeneralImpl {
                 tz,
                 access_count,
@@ -150,16 +193,8 @@ async fn greeting(id: Option<Cow<'_, str>>, request: Request) -> Result<Response
         .map_err(Into::into)
 }
 
-#[inline]
-pub(crate) async fn not_found(_request: Request) -> Response {
-    StatusCode::NOT_FOUND.into_response()
-}
-
 #[tracing::instrument]
 #[inline]
-// TODO: Shutdown connection immediately
-pub(crate) async fn fallback(request: Request) -> Response {
-    tracing::warn!("No available handler");
-
+pub(crate) async fn not_found(_request: Request) -> Response {
     StatusCode::NOT_FOUND.into_response()
 }

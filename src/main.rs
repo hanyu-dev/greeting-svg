@@ -36,11 +36,17 @@ async fn main() -> Result<()> {
             "/greeting/{id}",
             get(handler::axum_greeting).delete(handler::axum_greeting),
         )
-        .route("/greeting/favicon.ico", any(handler::not_found))
-        .route("/favicon.ico", any(handler::not_found))
+        .route(
+            "/moe-counter",
+            get(handler::axum_moe_counter_no_path).delete(handler::axum_moe_counter_no_path),
+        )
+        .route(
+            "/moe-counter/{id}",
+            get(handler::axum_moe_counter).delete(handler::axum_moe_counter),
+        )
         .layer(CompressionLayer::new())
         .layer(ServerTimingLayer::new(env!("CARGO_PKG_NAME")).with_description(utils::VERSION))
-        .fallback(handler::fallback);
+        .fallback(handler::not_found);
 
     let mut server_handlers = JoinSet::new();
 
