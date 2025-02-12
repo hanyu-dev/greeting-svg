@@ -1,8 +1,8 @@
 [package]
 name = "greeting-svg"
-version = "0.2.5-rc.2"
+version = "0.2.5-rc.3"
 edition = "2021"
-authors = ["Hantong Chen"]
+authors = ["Hantong Chen <cxwdyx620@gmail.com>"]
 license = "MIT"
 rust-version = "1.82"
 
