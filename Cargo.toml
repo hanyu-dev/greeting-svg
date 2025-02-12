@@ -11,16 +11,16 @@ ammonia = "4.0.0"
 anyhow = "1.0.95"
 arc-swap = "1.7.1"
 axum = { version = "0.8.1", default-features = false, features = ["http1", "http2", "tokio"] }
-bytes = "1.9.0"
+bytes = "1.10.0"
 chrono = { version = "0.4.39", default-features = false, features = ["now", "std", "clock"] }
 chrono-tz = "0.10.1"
 cidr = { version = "0.3.1", features = ["serde"] }
-clap = { version = "4.5.27", features = ["derive"] }
+clap = { version = "4.5.29", features = ["derive"] }
 dashmap = { version = "6.1.0", features = ["inline", "rayon"] }
-deadpool-sqlite = { version = "0.9.0", optional = true }
+deadpool-sqlite = { version = "0.10.0", optional = true }
 fluent-uri = "0.3.2"
 foldhash = "0.1.4"
-macro-toolset = { version = "0.8.0", default-features = false, features = [
+macro-toolset = { version = "0.8.2", default-features = false, features = [
     "feat-string",
     "feat-string-ext-ammonia",
     "feat-string-ext-ryu",
@@ -29,7 +29,7 @@ miku-server-timing = "0.2.0"
 mimalloc = "0.1.43"
 rand = "0.9.0"
 rayon = "1.10.0"
-rusqlite = { version = "0.32.1", optional = true }
+rusqlite = { version = "0.33.0", optional = true }
 serde = { version = "1.0.217", features = ["derive", "rc"] }
 serde_json = { version = "1.0.138", features = ["preserve_order"] }
 svg = "0.18.0"
@@ -47,7 +47,7 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter", "parking_lo
 anyhow = "1.0.95"
 chrono = { version = "0.4.39", default-features = false, features = ["clock"] }
 imagesize = "0.13.0"
-macro-toolset = { version = "0.8.0", default-features = false, features = ["feat-string", "feat-string-ext-base64"] }
+macro-toolset = { version = "0.8.2", default-features = false, features = ["feat-string", "feat-string-ext-base64"] }
 
 [profile.release]
 opt-level = 3
