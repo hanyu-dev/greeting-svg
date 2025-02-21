@@ -31,7 +31,7 @@ impl FromStr for BgType {
 
 impl BgType {
     #[inline]
-    fn svg_content(&self) -> impl StringExtT {
+    fn svg_content(&self) -> impl StringExtT + use<> {
         match self {
             BgType::None => (
                 r#"<g id="image"><line class="line" y1="20" y2="170" x1="300.5" x2="300.5"/><image class="bg" href=""#,

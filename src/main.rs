@@ -7,7 +7,7 @@ mod svg;
 mod utils;
 
 use anyhow::Result;
-use axum::routing::{any, get};
+use axum::routing::get;
 use macro_toolset::init_tracing_simple;
 use miku_server_timing::ServerTimingLayer;
 use tokio::{net::TcpListener, task::JoinSet};

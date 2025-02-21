@@ -110,16 +110,19 @@ impl Counter {
         }
 
         // Delete counter
-        if let Some((_, count)) = COUNTERS.remove(id) {
-            tracing::debug!(
-                "Deleted counter with count {}",
-                count.load(Ordering::Relaxed)
-            );
+        match COUNTERS.remove(id) {
+            Some((_, count)) => {
+                tracing::debug!(
+                    "Deleted counter with count {}",
+                    count.load(Ordering::Relaxed)
+                );
 
-            Self::persist_data_tx(id.into(), None).await;
-        } else {
-            tracing::debug!("Counter not found for [{id}]");
-            bail!(StatusCode::NOT_FOUND)
+                Self::persist_data_tx(id.into(), None).await;
+            }
+            _ => {
+                tracing::debug!("Counter not found for [{id}]");
+                bail!(StatusCode::NOT_FOUND)
+            }
         }
 
         Ok(())
