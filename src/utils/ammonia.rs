@@ -1,9 +1,10 @@
 use std::{
     collections::VecDeque,
-    sync::{Arc, LazyLock, Mutex},
+    sync::{Arc, LazyLock},
 };
 
 use dashmap::DashMap;
+use parking_lot::Mutex;
 
 /// Ammonia instance
 static AMMONIA: LazyLock<ammonia::Builder<'static>> = LazyLock::new(ammonia::Builder::default);
@@ -46,9 +47,7 @@ pub(crate) async fn get_filterd_note(note: impl AsRef<str>) -> Option<Arc<str>> 
                 tokio::spawn(async move {
                     AMMONIA_FILTERED_CACHE.insert(note.clone(), filtered_note);
 
-                    let mut keys = AMMONIA_FILTERED_KEYS
-                        .lock()
-                        .unwrap_or_else(|l| l.into_inner());
+                    let mut keys = AMMONIA_FILTERED_KEYS.lock();
 
                     keys.push_front(note);
 
@@ -57,12 +56,7 @@ pub(crate) async fn get_filterd_note(note: impl AsRef<str>) -> Option<Arc<str>> 
                             tracing::warn!("Too many cached notes, performing cleaning");
 
                             for _ in 0..(AMMONIA_FILTERED_KEYS_LIMIT / 2) {
-                                let note = {
-                                    AMMONIA_FILTERED_KEYS
-                                        .lock()
-                                        .unwrap_or_else(|l| l.into_inner())
-                                        .pop_back()
-                                };
+                                let note = { AMMONIA_FILTERED_KEYS.lock().pop_back() };
 
                                 if let Some(note) = note {
                                     AMMONIA_FILTERED_CACHE.remove(&note);
