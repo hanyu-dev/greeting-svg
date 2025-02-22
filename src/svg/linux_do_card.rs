@@ -241,7 +241,7 @@ fn cal_time_delta<Tz: chrono::TimeZone>(time: chrono::DateTime<Tz>) -> Option<im
         tracing::error!("Invalid time setting, check the local clock!");
         None
     } else {
-        Some(match created_delta_sec.cast_unsigned() {
+        Some(match created_delta_sec as u64 {
             0..SPEC_HOUR_SECS => (
                 NumStr::new_default(created_delta_sec as f64 / SPEC_MINUTE_SECS as f64)
                     .set_integer_only::<true>(),
