@@ -6,7 +6,10 @@ use anyhow::{Context, Result};
 use axum::{
     body::Body,
     extract::{Path, Request},
-    http::{HeaderName, HeaderValue, Method, StatusCode, header::CONTENT_TYPE},
+    http::{
+        HeaderName, HeaderValue, Method, StatusCode,
+        header::{CONTENT_TYPE, REFERER},
+    },
     response::{IntoResponse, Response},
 };
 
@@ -179,6 +182,10 @@ async fn greeting<const FORCE_MOE_COUNTER: bool, const FORCE_LINUX_DO_CARD: bool
                     .get("timezone")
                     .and_then(|tz| tz.parse().ok())
                     .unwrap_or(chrono_tz::Tz::Asia__Shanghai),
+                request
+                    .headers()
+                    .get(REFERER)
+                    .is_some_and(|r| r.as_bytes().starts_with(b"https://linux.do/")),
             )
             .set_custom_bio(queries.get("note"))
             .await
@@ -192,6 +199,10 @@ async fn greeting<const FORCE_MOE_COUNTER: bool, const FORCE_LINUX_DO_CARD: bool
                     .get("timezone")
                     .and_then(|tz| tz.parse().ok())
                     .unwrap_or(chrono_tz::Tz::Asia__Shanghai),
+                request
+                    .headers()
+                    .get(REFERER)
+                    .is_some_and(|r| r.as_bytes().starts_with(b"https://linux.do/")),
             )
             .set_custom_bio(queries.get("note"))
             .await

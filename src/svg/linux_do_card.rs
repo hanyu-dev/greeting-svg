@@ -20,15 +20,17 @@ pub(crate) struct LinuxDoCardImpl<'i, V = &'i str> {
     custom_bio: Option<V>,
     filtered_bio: Option<Arc<str>>,
     tz: Tz,
+    from_linux_do: bool,
 }
 
 impl<'i> LinuxDoCardImpl<'i> {
-    pub(crate) const fn new(user: &'i str, tz: Tz) -> Self {
+    pub(crate) const fn new(user: &'i str, tz: Tz, from_linux_do: bool) -> Self {
         Self {
             user: Some(user),
             custom_bio: None,
             filtered_bio: None,
             tz,
+            from_linux_do,
         }
     }
 
@@ -38,6 +40,7 @@ impl<'i> LinuxDoCardImpl<'i> {
             custom_bio: None,
             filtered_bio: None,
             tz: Tz::Asia__Shanghai,
+            from_linux_do: false,
         }
     }
 }
@@ -53,7 +56,7 @@ where
         cache::try_init_cache_update_queue().await;
 
         if let Some(user) = self.user {
-            if let Some(v) = get_or_fetch(user, count.is_none()).await {
+            if let Some(v) = get_or_fetch(user, self.from_linux_do || count.is_some()).await {
                 return self.create(&v);
             }
         }
@@ -76,6 +79,7 @@ where
             custom_bio,
             filtered_bio,
             tz: self.tz,
+            from_linux_do: self.from_linux_do,
         }
     }
 
@@ -182,8 +186,8 @@ where
 }
 
 #[tracing::instrument(level = "debug")]
-async fn get_or_fetch(user: &str, is_new_user: bool) -> Option<Arc<model::UserInfo>> {
-    let (cached, need_fetch) = cache::get_cache_or_fetch(user, is_new_user);
+async fn get_or_fetch(user: &str, authorized: bool) -> Option<Arc<model::UserInfo>> {
+    let (cached, need_fetch) = cache::get_cache_or_fetch(user, authorized);
 
     if let Some(need_fetch) = need_fetch {
         need_fetch.await;

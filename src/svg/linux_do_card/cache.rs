@@ -97,7 +97,7 @@ pub(super) async fn try_init_cache_update_queue() {
 /// Returns: data, update async task (you may await it or just throw it away)
 pub(super) fn get_cache_or_fetch(
     key: &str,
-    is_new_user: bool,
+    authorized: bool,
 ) -> (
     Option<Arc<UserInfo>>,
     Option<impl Future + Send + Sync + 'static>,
@@ -128,9 +128,7 @@ pub(super) fn get_cache_or_fetch(
     };
 
     let async_task = key.map(|key| async move {
-        if is_new_user {
-            tracing::debug!("Cache missed, but not authorized user!");
-        } else {
+        if authorized {
             tracing::debug!("Cache missed, try fetch in background");
 
             tokio::spawn(async move {
@@ -141,6 +139,8 @@ pub(super) fn get_cache_or_fetch(
                     }
                 }
             });
+        } else {
+            tracing::debug!("Cache missed, but not authorized user!");
         }
     });
 
