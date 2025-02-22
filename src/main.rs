@@ -40,6 +40,7 @@ async fn main() -> Result<()> {
             "/moe-counter",
             get(handler::axum_moe_counter_no_path).delete(handler::axum_moe_counter_no_path),
         )
+        .route("/moe-counter/", get(handler::axum_moe_counter_index))
         .route(
             "/moe-counter/{id}",
             get(handler::axum_moe_counter).delete(handler::axum_moe_counter),
@@ -48,6 +49,7 @@ async fn main() -> Result<()> {
             "/linux-do-card",
             get(handler::axum_linux_do_card_no_path).delete(handler::axum_linux_do_card_no_path),
         )
+        .route("/linux-do-card/", get(handler::axum_linux_do_card_index))
         .route(
             "/linux-do-card/{id}",
             get(handler::axum_linux_do_card).delete(handler::axum_linux_do_card),
