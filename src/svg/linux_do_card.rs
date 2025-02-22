@@ -50,6 +50,8 @@ where
         static DEFAULT_EMPTY_USER_INFO: LazyLock<String> =
             LazyLock::new(|| LinuxDoCardImpl::empty().create(&model::UserInfo::default()));
 
+        cache::try_init_cache_update_queue().await;
+
         if let Some(user) = self.user {
             if let Some(v) = get_or_fetch(user).await {
                 return self.create(&v);
