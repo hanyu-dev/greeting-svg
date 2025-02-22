@@ -6,6 +6,7 @@ mod upstream;
 
 use std::sync::{Arc, LazyLock};
 
+use chrono_tz::Tz;
 use macro_toolset::{
     str_concat,
     string::{NumStr, StringExtT},
@@ -18,14 +19,16 @@ pub(crate) struct LinuxDoCardImpl<'i, V = &'i str> {
     user: Option<&'i str>,
     custom_bio: Option<V>,
     filtered_bio: Option<Arc<str>>,
+    tz: Tz,
 }
 
 impl<'i> LinuxDoCardImpl<'i> {
-    pub(crate) const fn new(user: Option<&'i str>) -> Self {
+    pub(crate) const fn new(user: Option<&'i str>, tz: Tz) -> Self {
         Self {
             user,
             custom_bio: None,
             filtered_bio: None,
+            tz,
         }
     }
 
@@ -34,6 +37,7 @@ impl<'i> LinuxDoCardImpl<'i> {
             user: None,
             custom_bio: None,
             filtered_bio: None,
+            tz: Tz::Asia__Shanghai,
         }
     }
 }
@@ -69,6 +73,7 @@ where
             user: self.user,
             custom_bio,
             filtered_bio,
+            tz: self.tz,
         }
     }
 
@@ -150,7 +155,7 @@ where
                 </g>
                 <line x1="30" y1="235" x2="570" y2="235" stroke="rgba(211, 211, 211, 1)" stroke-width="1"/>
                 <g id="edit">
-                <text class="text" transform="translate(30 250)">Greeting SVG (modified from `linuxdo-card` created by zjkal)</text>
+                <text class="text" transform="translate(30 250)">Greeting SVG (originated from `linuxdo-card` by zjkal)</text>
                 <text class="text" transform="translate(330 250)">Updated: "#,
             user_info
                 .created
@@ -158,7 +163,7 @@ where
                     (
                         Some(
                             (chrono::Local::now() - instant.elapsed())
-                                .to_utc()
+                                .with_timezone(&self.tz)
                                 .to_rfc3339_opts(chrono::SecondsFormat::Secs, false),
                         ),
                         None,

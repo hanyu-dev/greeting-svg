@@ -140,6 +140,10 @@ async fn greeting<const FORCE_MOE_COUNTER: bool>(
                     .get("user")
                     .map(|user| user.trim_start_matches('@'))
                     .or(Some(id)),
+                queries
+                    .get("timezone")
+                    .and_then(|tz| tz.parse().ok())
+                    .unwrap_or(chrono_tz::Tz::Asia__Shanghai),
             )
             .set_custom_bio(queries.get("note"))
             .await
