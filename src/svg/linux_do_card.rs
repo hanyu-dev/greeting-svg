@@ -159,7 +159,7 @@ where
                         Some(
                             (chrono::Local::now() - instant.elapsed())
                                 .to_utc()
-                                .to_rfc3339(),
+                                .to_rfc3339_opts(chrono::SecondsFormat::Secs, false),
                         ),
                         None,
                     )
@@ -214,8 +214,8 @@ async fn get_or_fetch(user: &str) -> Option<Arc<model::UserInfo>> {
 }
 
 const SPEC_MINUTE_SECS: u64 = 60;
-const SPEC_HOUR_SECS: u64 = 3600;
-const SPEC_DAY_SECS: u64 = 86400;
+const SPEC_HOUR_SECS: u64 = SPEC_MINUTE_SECS * 60;
+const SPEC_DAY_SECS: u64 = SPEC_HOUR_SECS * 24;
 const SPEC_WEEK_SECS: u64 = SPEC_DAY_SECS * 7;
 const SPEC_MONTH_SECS: u64 = SPEC_DAY_SECS * 30;
 const SPEC_YEAR_SECS: u64 = SPEC_DAY_SECS * 365;
