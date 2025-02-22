@@ -8,7 +8,7 @@ use std::{
     process::Command,
 };
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use macro_toolset::{str_concat, string::b64_padding};
 
 fn main() -> Result<()> {

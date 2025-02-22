@@ -6,7 +6,7 @@ use macro_toolset::{
 };
 use rand::Rng;
 
-use crate::utils;
+use crate::utils::{self, Queries};
 
 include!(concat!(env!("OUT_DIR"), "/moe-counter.rs"));
 
@@ -54,7 +54,37 @@ impl Default for MoeCounterImpl<'_> {
     }
 }
 
-impl MoeCounterImpl<'_> {
+impl<'i> MoeCounterImpl<'i> {
+    pub(crate) fn from_queries(queries: &'i Queries) -> Self {
+        Self {
+            theme: queries
+                .get("theme")
+                .map(AsRef::as_ref)
+                .unwrap_or("moebooru"),
+            padding: queries
+                .get("padding")
+                .and_then(|padding| padding.parse().ok())
+                .unwrap_or(7),
+            offset: queries
+                .get("offset")
+                .and_then(|offset| offset.parse().ok())
+                .unwrap_or(0.0),
+            align: queries.get("align").map(AsRef::as_ref).unwrap_or("top"),
+            scale: queries
+                .get("scale")
+                .and_then(|scale| scale.parse().ok())
+                .unwrap_or(1.0),
+            pixelated: queries
+                .get("pixelated")
+                .map(|pixelated| pixelated == "1" || pixelated == "true")
+                .unwrap_or(false),
+            darkmode: queries
+                .get("darkmode")
+                .map(|darkmode| darkmode == "1" || darkmode == "true"),
+            prefix: queries.get("prefix").and_then(|prefix| prefix.parse().ok()),
+        }
+    }
+
     /// Generate SVG
     pub(crate) fn generate(self, count: u64) -> String {
         let moe_counter_list::MoeCounter {

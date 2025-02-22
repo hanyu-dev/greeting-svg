@@ -8,8 +8,8 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use anyhow::{anyhow, bail, Context, Result};
-use tokio::sync::{mpsc, Semaphore};
+use anyhow::{Context, Result, anyhow, bail};
+use tokio::sync::{Semaphore, mpsc};
 
 #[cfg(feature = "sqlite")]
 /// Database pool: `sqlite`

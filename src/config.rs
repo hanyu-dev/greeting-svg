@@ -4,8 +4,8 @@ use std::{
     path::Path,
     str::FromStr,
     sync::{
-        atomic::{AtomicUsize, Ordering},
         Arc, LazyLock, OnceLock,
+        atomic::{AtomicUsize, Ordering},
     },
 };
 

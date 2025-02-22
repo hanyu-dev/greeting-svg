@@ -12,6 +12,12 @@ use crate::config::{CONF_ACCESS_KEY, CONF_CIDR_WHITELIST};
 
 /// The version of the crate.
 pub(crate) static VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
+/// General User-Agent
+pub(crate) static GENERAL_USER_AGENT: &str = concat!(
+    env!("CARGO_PKG_NAME"),
+    "/",
+    include_str!(concat!(env!("OUT_DIR"), "/VERSION"))
+);
 
 // /// The version of the server.
 // pub(crate) static BUILD_TIME: &str = include_str!(concat!(env!("OUT_DIR"),
@@ -29,7 +35,7 @@ impl<'q> Queries<'q> {
     #[inline]
     /// Parse query string
     pub(crate) fn try_parse(query: &'q str) -> Self {
-        use fluent_uri::encoding::{encoder::IQuery, EStr};
+        use fluent_uri::encoding::{EStr, encoder::IQuery};
 
         EStr::<IQuery>::new(query)
             .unwrap_or_else(|| {

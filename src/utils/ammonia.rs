@@ -7,7 +7,7 @@ use dashmap::DashMap;
 use parking_lot::Mutex;
 
 /// Ammonia instance
-static AMMONIA: LazyLock<ammonia::Builder<'static>> = LazyLock::new(ammonia::Builder::default);
+static AMMONIA: LazyLock<ammonia::Builder<'static>> = LazyLock::new(ammonia::Builder::empty);
 
 /// Filtered notes
 static AMMONIA_FILTERED_CACHE: LazyLock<
@@ -23,7 +23,11 @@ const AMMONIA_FILTERED_KEYS_LIMIT: usize = 8192;
 /// Get filtered note
 ///
 /// Notes: returning None means cache hit but not change, just left the same.
-pub(crate) async fn get_filterd_note(note: impl AsRef<str>) -> Option<Arc<str>> {
+pub(crate) async fn get_filterd_note(
+    note: impl AsRef<str>,
+    mut max_length: Option<usize>,
+    preserve_control: bool,
+) -> Option<Arc<str>> {
     let note = note.as_ref();
 
     match AMMONIA_FILTERED_CACHE.get(note) {
@@ -34,7 +38,16 @@ pub(crate) async fn get_filterd_note(note: impl AsRef<str>) -> Option<Arc<str>> 
         }
         None => {
             let note: Arc<str> = Arc::from(note);
-            let filtered_note = AMMONIA.clean(&note).to_string();
+            let mut filtered_note = AMMONIA.clean(&note).to_string();
+
+            if !preserve_control {
+                max_length = max_length.or(filtered_note.find(|c: char| c.is_ascii_control()));
+            }
+
+            if let Some(max_length) = max_length {
+                filtered_note.truncate(max_length);
+                filtered_note.push_str("...");
+            }
 
             let filtered_note = if filtered_note == note.as_ref() {
                 None

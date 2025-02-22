@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use axum::{
     body::Body,
     extract::{Path, Request},
-    http::{header::CONTENT_TYPE, HeaderName, HeaderValue, Method, StatusCode},
+    http::{HeaderName, HeaderValue, Method, StatusCode, header::CONTENT_TYPE},
     response::{IntoResponse, Response},
 };
 
@@ -134,62 +134,19 @@ async fn greeting<const FORCE_MOE_COUNTER: bool>(
     let greeting_type = queries.get("type").map(AsRef::as_ref);
 
     let mut content = match greeting_type {
-        Some("moe-counter") => svg::moe_counter::MoeCounterImpl {
-            theme: queries
-                .get("theme")
-                .map(AsRef::as_ref)
-                .unwrap_or("moebooru"),
-            padding: queries
-                .get("padding")
-                .and_then(|padding| padding.parse().ok())
-                .unwrap_or(7),
-            offset: queries
-                .get("offset")
-                .and_then(|offset| offset.parse().ok())
-                .unwrap_or(0.0),
-            align: queries.get("align").map(AsRef::as_ref).unwrap_or("top"),
-            scale: queries
-                .get("scale")
-                .and_then(|scale| scale.parse().ok())
-                .unwrap_or(1.0),
-            pixelated: queries
-                .get("pixelated")
-                .map(|pixelated| pixelated == "1" || pixelated == "true")
-                .unwrap_or(false),
-            darkmode: queries
-                .get("darkmode")
-                .map(|darkmode| darkmode == "1" || darkmode == "true"),
-            prefix: queries.get("prefix").and_then(|prefix| prefix.parse().ok()),
+        Some("linux-do-card") => {
+            svg::linux_do_card::LinuxDoCardImpl::new(
+                queries.get("user").map(|user| user.trim_start_matches('@')),
+            )
+            .set_custom_bio(queries.get("note"))
+            .await
+            .generate(access_count.unwrap_or_default())
+            .await
         }
-        .generate(access_count.unwrap_or_default()),
-        _ if FORCE_MOE_COUNTER => svg::moe_counter::MoeCounterImpl {
-            theme: queries
-                .get("theme")
-                .map(AsRef::as_ref)
-                .unwrap_or("moebooru"),
-            padding: queries
-                .get("padding")
-                .and_then(|padding| padding.parse().ok())
-                .unwrap_or(7),
-            offset: queries
-                .get("offset")
-                .and_then(|offset| offset.parse().ok())
-                .unwrap_or(0.0),
-            align: queries.get("align").map(AsRef::as_ref).unwrap_or("top"),
-            scale: queries
-                .get("scale")
-                .and_then(|scale| scale.parse().ok())
-                .unwrap_or(1.0),
-            pixelated: queries
-                .get("pixelated")
-                .map(|pixelated| pixelated == "1" || pixelated == "true")
-                .unwrap_or(false),
-            darkmode: queries
-                .get("darkmode")
-                .map(|darkmode| darkmode == "1" || darkmode == "true"),
-            prefix: queries.get("prefix").and_then(|prefix| prefix.parse().ok()),
-        }
-        .generate(access_count.unwrap_or_default()),
+        Some("moe-counter") => svg::moe_counter::MoeCounterImpl::from_queries(&queries)
+            .generate(access_count.unwrap_or_default()),
+        _ if FORCE_MOE_COUNTER => svg::moe_counter::MoeCounterImpl::from_queries(&queries)
+            .generate(access_count.unwrap_or_default()),
         _ => {
             // * Custom Timezone, default to Asia/Shanghai
             let tz = queries

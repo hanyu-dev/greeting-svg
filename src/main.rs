@@ -100,7 +100,7 @@ async fn main() -> Result<()> {
 async fn shutdown_signal() {
     #[cfg(unix)]
     let hangup = async {
-        use tokio::signal::unix::{signal, SignalKind};
+        use tokio::signal::unix::{SignalKind, signal};
         signal(SignalKind::hangup()).unwrap().recv().await;
     };
 

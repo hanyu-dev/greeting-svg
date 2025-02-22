@@ -1,3 +1,4 @@
+pub(crate) mod linux_do_card;
 pub(crate) mod moe_counter;
 
 use std::{borrow::Cow, convert::Infallible, str::FromStr};
@@ -116,7 +117,7 @@ impl GeneralImpl<'_> {
 
         let note = match self.note {
             Some(note) => {
-                let filtered_note = get_filterd_note(note).await;
+                let filtered_note = get_filterd_note(note, None, false).await;
                 filtered_note.map_or((None, self.note), |note| (Some(note), None))
             }
             None => (None, None),

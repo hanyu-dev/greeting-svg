@@ -6,12 +6,12 @@ use std::{
     borrow::Cow,
     net::IpAddr,
     sync::{
-        atomic::{AtomicU64, Ordering},
         Arc, LazyLock, OnceLock,
+        atomic::{AtomicU64, Ordering},
     },
 };
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use axum::http::StatusCode;
 use dashmap::DashMap;
 use tokio::sync::mpsc;
