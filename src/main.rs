@@ -44,6 +44,14 @@ async fn main() -> Result<()> {
             "/moe-counter/{id}",
             get(handler::axum_moe_counter).delete(handler::axum_moe_counter),
         )
+        .route(
+            "/linux-do-card",
+            get(handler::axum_linux_do_card_no_path).delete(handler::axum_linux_do_card_no_path),
+        )
+        .route(
+            "/linux-do-card/{id}",
+            get(handler::axum_linux_do_card).delete(handler::axum_linux_do_card),
+        )
         .layer(CompressionLayer::new())
         .layer(ServerTimingLayer::new(env!("CARGO_PKG_NAME")).with_description(utils::VERSION))
         .fallback(handler::not_found);

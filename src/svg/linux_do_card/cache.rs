@@ -27,9 +27,14 @@ const CACHE_TTL: u64 = 15;
 /// Desired max key count, 5120
 const DESIRED_MAX_KEY_COUNT: usize = 5120;
 
+static FETCH_PROCESSING: LazyLock<DashMap<Arc<str>, (), foldhash::fast::RandomState>> =
+    LazyLock::new(|| {
+        DashMap::with_capacity_and_hasher(128, foldhash::fast::RandomState::default())
+    });
+
 /// static CACHE map
 static CACHE: LazyLock<Cache<Arc<str>, Arc<UserInfo>>> =
-    LazyLock::new(|| Cache::with_capacity(128));
+    LazyLock::new(|| Cache::with_capacity(DESIRED_MAX_KEY_COUNT));
 
 static CACHE_UPDATE_QUEUE: LazyLock<CacheUpdateQueue> =
     LazyLock::new(|| Mutex::new(VecDeque::with_capacity(DESIRED_MAX_KEY_COUNT)));
@@ -53,13 +58,13 @@ pub(super) async fn try_init_cache_update_queue() {
                     tracing::trace!(to_update = ?to_update, "cache_update_queue: to update!");
                     tokio::spawn(async move {
                         match upstream::fetch(&to_update).await {
-                            Ok(value) => write_cache(to_update, value).await,
+                            Ok(value) => write_cache(value).await,
                             Err(e) => {
                                 tracing::error!(
                                     to_update = to_update.as_ref(),
                                     "background update error: {e:#?}"
-                                )
-                            }
+                                );
+                            },
                         };
                     });
                 }
@@ -86,18 +91,68 @@ pub(super) async fn try_init_cache_update_queue() {
     }
 }
 
+#[must_use = "must handle if need fetch!!!"]
 /// Get cache
-pub(super) fn get_cache(key: &str) -> Option<(Arc<UserInfo>, bool)> {
-    CACHE
-        .get(key)
-        .map(|v| (v.0.clone(), v.1.elapsed().as_secs() > CACHE_TTL))
+///
+/// Returns: data, update async task (you may await it or just throw it away)
+pub(super) fn get_cache_or_fetch(
+    key: &str,
+    is_new_user: bool,
+) -> (
+    Option<Arc<UserInfo>>,
+    Option<impl Future + Send + Sync + 'static>,
+) {
+    let (data, key) = match CACHE.get(key) {
+        Some(v) => (
+            Some(v.0.clone()),
+            if v.1.elapsed().as_secs() > CACHE_TTL {
+                Some(key.into())
+            } else {
+                None
+            },
+        ),
+        None => (None, {
+            let key: Arc<str> = key.into();
+
+            match FETCH_PROCESSING.entry(key.clone()) {
+                dashmap::Entry::Vacant(v) => {
+                    v.insert(());
+                    Some(key)
+                }
+                dashmap::Entry::Occupied(_) => {
+                    tracing::debug!(key = ?key, "Processing, just wait...");
+                    None
+                }
+            }
+        }),
+    };
+
+    let async_task = key.map(|key| async move {
+        if is_new_user {
+            tracing::debug!("Cache missed, but not authorized user!");
+        } else {
+            tracing::debug!("Cache missed, try fetch in background");
+
+            tokio::spawn(async move {
+                match upstream::fetch(&key).await {
+                    Ok(value) => write_cache(value).await,
+                    Err(e) => {
+                        tracing::error!("Fetch upstream data error: {e:#?}");
+                    }
+                }
+            });
+        }
+    });
+
+    (data, async_task)
 }
 
 /// Write cache
-pub(super) async fn write_cache(key: impl Into<Arc<str>>, value: impl Into<Arc<UserInfo>>) {
+pub(super) async fn write_cache(value: impl Into<Arc<UserInfo>>) {
     let value = value.into();
     if let Some(created) = value.created {
-        let key: Arc<str> = key.into();
+        let key = value.user.username.clone();
+        FETCH_PROCESSING.remove(&key);
         CACHE.insert(key.clone(), (value, created));
 
         if CACHE.len() > DESIRED_MAX_KEY_COUNT {

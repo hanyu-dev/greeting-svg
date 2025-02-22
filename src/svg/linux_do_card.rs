@@ -23,9 +23,9 @@ pub(crate) struct LinuxDoCardImpl<'i, V = &'i str> {
 }
 
 impl<'i> LinuxDoCardImpl<'i> {
-    pub(crate) const fn new(user: Option<&'i str>, tz: Tz) -> Self {
+    pub(crate) const fn new(user: &'i str, tz: Tz) -> Self {
         Self {
-            user,
+            user: Some(user),
             custom_bio: None,
             filtered_bio: None,
             tz,
@@ -46,14 +46,14 @@ impl<'i, V> LinuxDoCardImpl<'i, V>
 where
     V: AsRef<str>,
 {
-    pub(crate) async fn generate(self, _count: u64) -> String {
+    pub(crate) async fn generate(self, count: Option<u64>) -> String {
         static DEFAULT_EMPTY_USER_INFO: LazyLock<String> =
             LazyLock::new(|| LinuxDoCardImpl::empty().create(&model::UserInfo::default()));
 
         cache::try_init_cache_update_queue().await;
 
         if let Some(user) = self.user {
-            if let Some(v) = get_or_fetch(user).await {
+            if let Some(v) = get_or_fetch(user, count.is_none()).await {
                 return self.create(&v);
             }
         }
@@ -182,43 +182,14 @@ where
 }
 
 #[tracing::instrument(level = "debug")]
-async fn get_or_fetch(user: &str) -> Option<Arc<model::UserInfo>> {
-    match cache::get_cache(user) {
-        Some((cache, false)) => {
-            tracing::debug!("Cache hit");
-            Some(cache)
-        }
-        Some((cache, true)) => {
-            tracing::debug!("Cache expired, try to refresh");
+async fn get_or_fetch(user: &str, is_new_user: bool) -> Option<Arc<model::UserInfo>> {
+    let (cached, need_fetch) = cache::get_cache_or_fetch(user, is_new_user);
 
-            let key: Arc<str> = user.into();
-            tokio::spawn(async move {
-                match upstream::fetch(&key).await {
-                    Ok(value) => cache::write_cache(key, value).await,
-                    Err(e) => {
-                        tracing::error!("Fetch upstream data error: {e:#?}");
-                    }
-                }
-            });
-
-            Some(cache)
-        }
-        None => {
-            tracing::debug!("Cache missed, try fetch in background");
-
-            let user = Arc::from(user);
-            tokio::spawn(async move {
-                match upstream::fetch(&user).await {
-                    Ok(value) => cache::write_cache(user, value).await,
-                    Err(e) => {
-                        tracing::error!("Fetch upstream data error: {e:#?}");
-                    }
-                }
-            });
-
-            None
-        }
+    if let Some(need_fetch) = need_fetch {
+        need_fetch.await;
     }
+
+    cached
 }
 
 const SPEC_MINUTE_SECS: u64 = 60;

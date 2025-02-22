@@ -18,7 +18,7 @@ use crate::{counter::Counter, svg, utils::Queries};
 pub(crate) async fn axum_greeting_no_path(request: Request) -> Result<Response, StatusCode> {
     tracing::debug!("Accepted request.");
 
-    match greeting::<false>(None, request).await {
+    match greeting::<false, false>(None, request).await {
         Ok(greeting) => Ok(greeting),
         Err(error) => match error.downcast::<StatusCode>() {
             Ok(status_code) => Err(status_code),
@@ -39,7 +39,7 @@ pub(crate) async fn axum_greeting(
 ) -> Result<Response, StatusCode> {
     tracing::debug!("Accepted request.");
 
-    match greeting::<false>(Some(id), request).await {
+    match greeting::<false, false>(Some(id), request).await {
         Ok(greeting) => Ok(greeting),
         Err(error) => match error.downcast::<StatusCode>() {
             Ok(status_code) => Err(status_code),
@@ -57,7 +57,7 @@ pub(crate) async fn axum_greeting(
 pub(crate) async fn axum_moe_counter_no_path(request: Request) -> Result<Response, StatusCode> {
     tracing::debug!("Accepted request.");
 
-    match greeting::<true>(None, request).await {
+    match greeting::<true, false>(None, request).await {
         Ok(greeting) => Ok(greeting),
         Err(error) => match error.downcast::<StatusCode>() {
             Ok(status_code) => Err(status_code),
@@ -78,7 +78,7 @@ pub(crate) async fn axum_moe_counter(
 ) -> Result<Response, StatusCode> {
     tracing::debug!("Accepted request.");
 
-    match greeting::<true>(Some(id), request).await {
+    match greeting::<true, false>(Some(id), request).await {
         Ok(greeting) => Ok(greeting),
         Err(error) => match error.downcast::<StatusCode>() {
             Ok(status_code) => Err(status_code),
@@ -90,10 +90,48 @@ pub(crate) async fn axum_moe_counter(
     }
 }
 
+#[inline]
+#[tracing::instrument]
+/// Moe counter router
+pub(crate) async fn axum_linux_do_card_no_path(request: Request) -> Result<Response, StatusCode> {
+    tracing::debug!("Accepted request.");
+
+    match greeting::<false, true>(None, request).await {
+        Ok(greeting) => Ok(greeting),
+        Err(error) => match error.downcast::<StatusCode>() {
+            Ok(status_code) => Err(status_code),
+            Err(error) => {
+                tracing::error!("{:?}", error);
+                Err(StatusCode::BAD_REQUEST)
+            }
+        },
+    }
+}
+
+#[inline]
+#[tracing::instrument]
+/// Moe counter router
+pub(crate) async fn axum_linux_do_card(
+    Path(id): Path<Cow<'static, str>>,
+    request: Request,
+) -> Result<Response, StatusCode> {
+    tracing::debug!("Accepted request.");
+
+    match greeting::<false, true>(Some(id), request).await {
+        Ok(greeting) => Ok(greeting),
+        Err(error) => match error.downcast::<StatusCode>() {
+            Ok(status_code) => Err(status_code),
+            Err(error) => {
+                tracing::error!("{:?}", error);
+                Err(StatusCode::BAD_REQUEST)
+            }
+        },
+    }
+}
 const X_FORWARDED_FOR: HeaderName = HeaderName::from_static("x-forwarded-for");
 
 #[inline]
-async fn greeting<const FORCE_MOE_COUNTER: bool>(
+async fn greeting<const FORCE_MOE_COUNTER: bool, const FORCE_LINUX_DO_CARD: bool>(
     id: Option<Cow<'_, str>>,
     request: Request,
 ) -> Result<Response> {
@@ -136,10 +174,7 @@ async fn greeting<const FORCE_MOE_COUNTER: bool>(
     let mut content = match greeting_type {
         Some("linux-do-card") => {
             svg::linux_do_card::LinuxDoCardImpl::new(
-                queries
-                    .get("user")
-                    .map(|user| user.trim_start_matches('@'))
-                    .or(Some(id)),
+                id,
                 queries
                     .get("timezone")
                     .and_then(|tz| tz.parse().ok())
@@ -147,7 +182,20 @@ async fn greeting<const FORCE_MOE_COUNTER: bool>(
             )
             .set_custom_bio(queries.get("note"))
             .await
-            .generate(access_count.unwrap_or_default())
+            .generate(access_count)
+            .await
+        }
+        _ if FORCE_LINUX_DO_CARD => {
+            svg::linux_do_card::LinuxDoCardImpl::new(
+                id,
+                queries
+                    .get("timezone")
+                    .and_then(|tz| tz.parse().ok())
+                    .unwrap_or(chrono_tz::Tz::Asia__Shanghai),
+            )
+            .set_custom_bio(queries.get("note"))
+            .await
+            .generate(access_count)
             .await
         }
         Some("moe-counter") => svg::moe_counter::MoeCounterImpl::from_queries(&queries)
@@ -155,14 +203,11 @@ async fn greeting<const FORCE_MOE_COUNTER: bool>(
         _ if FORCE_MOE_COUNTER => svg::moe_counter::MoeCounterImpl::from_queries(&queries)
             .generate(access_count.unwrap_or_default()),
         _ => {
-            // * Custom Timezone, default to Asia/Shanghai
-            let tz = queries
-                .get("timezone")
-                .and_then(|tz| tz.parse().ok())
-                .unwrap_or(chrono_tz::Tz::Asia__Shanghai);
-
             svg::GeneralImpl {
-                tz,
+                tz: queries
+                    .get("timezone")
+                    .and_then(|tz| tz.parse().ok())
+                    .unwrap_or(chrono_tz::Tz::Asia__Shanghai),
                 access_count,
                 bg_type: queries
                     .get("bg_type")
