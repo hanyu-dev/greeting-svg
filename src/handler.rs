@@ -136,7 +136,10 @@ async fn greeting<const FORCE_MOE_COUNTER: bool>(
     let mut content = match greeting_type {
         Some("linux-do-card") => {
             svg::linux_do_card::LinuxDoCardImpl::new(
-                queries.get("user").map(|user| user.trim_start_matches('@')),
+                queries
+                    .get("user")
+                    .map(|user| user.trim_start_matches('@'))
+                    .or(Some(id)),
             )
             .set_custom_bio(queries.get("note"))
             .await
