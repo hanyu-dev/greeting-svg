@@ -109,7 +109,8 @@ where
                 .as_ref()
                 .map(AsRef::as_ref)
                 .or(self.custom_bio.as_ref().map(AsRef::as_ref))
-                .unwrap_or_else(|| &user_info.user.bio_excerpt), // BIO
+                .or(user_info.user.bio_raw.as_ref().map(AsRef::as_ref))
+                .unwrap_or("小白一枚"), // BIO
             r#"</text>
                     <text class="text" transform="translate(30 90)">🕒注册时间</text>
                     <text class="text" transform="translate(330 90)">🕗最近上线</text>

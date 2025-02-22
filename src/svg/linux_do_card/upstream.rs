@@ -75,8 +75,10 @@ pub(super) async fn fetch(user_name: &str) -> Result<model::UserInfo> {
     // abcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefga
 
     //  Filter
-    if let Some(bio_excerpt) = get_filterd_note(&user.bio_excerpt, None, false).await {
-        user.bio_excerpt = bio_excerpt;
+    if let Some(bio_raw) = &user.bio_raw {
+        if let Some(bio_raw) = get_filterd_note(bio_raw, None, false).await {
+            user.bio_raw = Some(bio_raw);
+        }
     }
 
     wait(1).await;

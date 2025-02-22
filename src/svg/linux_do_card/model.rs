@@ -74,13 +74,13 @@ pub(super) struct User {
     pub username: Arc<str>,
 
     /// 用户昵称
-    pub name: Arc<str>,
+    pub name: Option<Arc<str>>,
 
     /// 用户等级
     pub trust_level: u8,
 
-    /// 用户 Bio
-    pub bio_excerpt: Arc<str>,
+    /// 用户 Bio (Raw)
+    pub bio_raw: Option<Arc<str>>,
 
     /// 最后上线
     pub last_seen_at: DateTime<Utc>,
