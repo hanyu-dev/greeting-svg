@@ -81,11 +81,11 @@ where
                         svg { background-color: rgba(0, 0, 0, 0); }
                         #info .text { font-size: 16px; fill: rgba(0, 140, 255, 1); font-weight: lighter; }
                         #summary .text { font-size: 16px; fill: rgba(0, 140, 255, 1); font-weight: lighter; }
-                        #edit .text { font-size: 6px; fill: rgba(0, 140, 255, 1); font-weight: lighter; }
+                        #edit .text { font-size: 10px; fill: rgba(0, 140, 255, 1); font-weight: lighter; }
                     </style>
                 </defs>
                 <g id="info">
-                    <text class="text" transform="translate(30 50)">"#,
+                    <text class="text" transform="translate(30 30)">"#,
             &user_info.user.username,
             r#" ("#,
             match user_info.user.trust_level {
@@ -97,61 +97,61 @@ where
                 _ => "✨突破天际",
             },
             r#")</text>
-                    <text class="text" transform="translate(30 80)">"#,
+                    <text class="text" transform="translate(30 60)">"#,
             self.filtered_bio
                 .as_ref()
                 .map(AsRef::as_ref)
                 .or(self.custom_bio.as_ref().map(AsRef::as_ref))
                 .unwrap_or_else(|| &user_info.user.bio_excerpt), // BIO
             r#"</text>
-                    <text class="text" transform="translate(30 110)">🕒注册时间</text>
-                    <text class="text" transform="translate(330 110)">🕗最近上线</text>
-                    <text class="text" transform="translate(150 110)">"#,
+                    <text class="text" transform="translate(30 90)">🕒注册时间</text>
+                    <text class="text" transform="translate(330 90)">🕗最近上线</text>
+                    <text class="text" transform="translate(150 90)">"#,
             cal_time_delta(user_info.user.created_at),
             r#"</text>
-                    <text class="text" transform="translate(450 110)">"#,
+                    <text class="text" transform="translate(450 90)">"#,
             cal_time_delta(user_info.user.last_seen_at),
             r#"</text>
                 </g>
-                <line x1="30" y1="120" x2="570" y2="120" stroke="rgba(211, 211, 211, 1)" stroke-width="1"/>
+                <line x1="30" y1="100" x2="570" y2="100" stroke="rgba(211, 211, 211, 1)" stroke-width="1"/>
                 <g id="summary">
-                    <text class="text" transform="translate(30 150)">🛎️访问天数</text>
-                    <text class="text" transform="translate(30 180)">⌛阅读时间</text>
-                    <text class="text" transform="translate(30 210)">📰浏览话题</text>
-                    <text class="text" transform="translate(30 240)">📑已读帖子</text>
-                    <text class="text" transform="translate(330 150)">💝已送出赞</text>
-                    <text class="text" transform="translate(330 180)">👍已收到赞</text>
-                    <text class="text" transform="translate(330 210)">📖创建帖子</text>
-                    <text class="text" transform="translate(330 240)">💡解决方案</text>
-                    <text class="text" transform="translate(150 150)">"#,
+                    <text class="text" transform="translate(30 130)">🛎️访问天数</text>
+                    <text class="text" transform="translate(30 160)">⌛阅读时间</text>
+                    <text class="text" transform="translate(30 190)">📰浏览话题</text>
+                    <text class="text" transform="translate(30 220)">📑已读帖子</text>
+                    <text class="text" transform="translate(330 130)">💝已送出赞</text>
+                    <text class="text" transform="translate(330 160)">👍已收到赞</text>
+                    <text class="text" transform="translate(330 190)">📖创建帖子</text>
+                    <text class="text" transform="translate(330 220)">💡解决方案</text>
+                    <text class="text" transform="translate(150 130)">"#,
             user_info.user_summary.days_visited, // 访问天数
             r#"</text>
-                    <text class="text" transform="translate(150 180)">"#,
+                    <text class="text" transform="translate(150 160)">"#,
             duration_human_format(user_info.user_summary.time_read), // 阅读时间
             r#"</text>
-                    <text class="text" transform="translate(150 210)">"#,
+                    <text class="text" transform="translate(150 190)">"#,
             user_info.user_summary.topics_entered, // 浏览话题
             r#"</text>
-                    <text class="text" transform="translate(150 240)">"#,
+                    <text class="text" transform="translate(150 220)">"#,
             user_info.user_summary.posts_read_count, // 已读帖子
             r#"</text>
-                    <text class="text" transform="translate(450 150)">"#,
+                    <text class="text" transform="translate(450 130)">"#,
             user_info.user_summary.likes_given, // 已送出赞
             r#"</text>
-                    <text class="text" transform="translate(450 180)">"#,
+                    <text class="text" transform="translate(450 160)">"#,
             user_info.user_summary.likes_received, // 已收到赞
             r#"</text>
-                    <text class="text" transform="translate(450 210)">"#,
+                    <text class="text" transform="translate(450 190)">"#,
             user_info.user_summary.post_count, // 创建帖子
             r#"</text>
-                    <text class="text" transform="translate(450 240)">"#,
+                    <text class="text" transform="translate(450 220)">"#,
             user_info.user_summary.solved_count, // 解决方案
             r#"</text>
                 </g>
-                <line x1="30" y1="255" x2="570" y2="255" stroke="rgba(211, 211, 211, 1)" stroke-width="1"/>
+                <line x1="30" y1="235" x2="570" y2="235" stroke="rgba(211, 211, 211, 1)" stroke-width="1"/>
                 <g id="edit">
-                <text class="text" transform="translate(30 270)">Greeting SVG (MIT License), modified from `linuxdo-card` created by zjkal</text>
-                <text class="text" transform="translate(330 270)">Updated: "#,
+                <text class="text" transform="translate(30 250)">Greeting SVG (modified from `linuxdo-card` created by zjkal)</text>
+                <text class="text" transform="translate(330 250)">Updated: "#,
             user_info
                 .created
                 .map(|instant| {
@@ -164,7 +164,7 @@ where
                         None,
                     )
                 })
-                .unwrap_or_else(|| (None, Some("... [FETCHING UPSTREAM IN BACKGROUND]"))),
+                .unwrap_or_else(|| (None, Some("... [FETCHING UPSTREAM]"))),
             r#"</text>
                 </g>
             </svg>
